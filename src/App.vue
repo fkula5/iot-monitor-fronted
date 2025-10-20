@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { Button } from "@/components/ui/button";
+import { RouterView } from "vue-router";
 </script>
 
 <template>
-  <Button>Click me!</Button>
+  <RouterView />
 </template>
-
-<style scoped></style>
