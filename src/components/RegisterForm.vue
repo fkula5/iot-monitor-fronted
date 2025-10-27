@@ -118,7 +118,11 @@ import { Label } from "./ui/label";
           </span>
         </div>
       </div>
-      <Button type="button" variant="outline" class="w-full"> Sign in </Button>
+      <RouterLink to="/login">
+        <Button type="button" variant="outline" class="w-full text-black">
+          Sign in
+        </Button>
+      </RouterLink>
     </CardContent>
   </Card>
 </template>
