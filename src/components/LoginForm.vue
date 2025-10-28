@@ -15,12 +15,65 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  Form,
 } from "@/components/ui/form";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { toTypedSchema } from "@vee-validate/zod";
+import * as z from "zod";
+import { useForm } from "vee-validate";
 
 function buttonForgotPassword() {
   alert("Forgot password clicked");
 }
+
+const serverErr = ref<string | null>(null);
+const router = useRouter();
+
+const formSchema = toTypedSchema(
+  z.object({
+    email: z.string().email({ message: "Nieprawidłowy adres email." }),
+    password: z.string().nonempty({ message: "Hasło jest wymagane." }),
+  })
+);
+
+const { handleSubmit, isSubmitting } = useForm({
+  validationSchema: formSchema,
+});
+
+const onSubmit = handleSubmit(async (values) => {
+  serverErr.value = null;
+
+  try {
+    const response = await fetch("http://localhost:3000/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: values.email,
+        password: values.password,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Nieprawidłowy adres email lub hasło.");
+      }
+      throw new Error(data.message || "Błąd logowania. Spróbuj ponownie.");
+    }
+
+    if (data.token) {
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      router.push("/dashboard/sensors");
+    }
+  } catch (err: any) {
+    console.error("Błąd podczas logowania:", err);
+    serverErr.value = err.message || "Wystąpił nieoczekiwany błąd.";
+  }
+});
 </script>
 
 <template>
@@ -32,7 +85,7 @@ function buttonForgotPassword() {
       </CardDescription>
     </CardHeader>
     <CardContent>
-      <Form class="space-y-4">
+      <form class="space-y-4" @submit="onSubmit">
         <FormField v-slot="{ componentField }" name="email">
           <FormItem class="space-y-2">
             <FormLabel>Email</FormLabel>
@@ -71,7 +124,13 @@ function buttonForgotPassword() {
           </FormItem>
         </FormField>
 
-        <Button type="submit" class="w-full"> Sign in </Button>
+        <p v-if="serverErr" class="text-sm font-medium text-destructive">
+          {{ serverErr }}
+        </p>
+
+        <Button type="submit" class="w-full" :disabled="isSubmitting">
+          {{ isSubmitting ? "Logging in..." : "Log in" }}
+        </Button>
 
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
@@ -88,7 +147,7 @@ function buttonForgotPassword() {
             Create Account
           </Button>
         </RouterLink>
-      </Form>
+      </form>
     </CardContent>
   </Card>
 </template>

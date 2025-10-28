@@ -14,10 +14,79 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  Form,
 } from "@/components/ui/form";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { toTypedSchema } from "@vee-validate/zod";
+import * as z from "zod";
+import { useForm } from "vee-validate";
+
+const serverErr = ref<string | null>(null);
+const router = useRouter();
+
+const formSchema = toTypedSchema(
+  z
+    .object({
+      firstName: z
+        .string()
+        .min(2, { message: "Imię musi mieć co najmniej 2 znaki." }),
+      lastName: z
+        .string()
+        .min(2, { message: "Nazwisko musi mieć co najmniej 2 znaki." }),
+      email: z.string().email({ message: "Nieprawidłowy adres email." }),
+      password: z
+        .string()
+        .min(8, { message: "Hasło musi mieć co najmniej 8 znaków." }),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: "Hasła nie są zgodne.",
+      path: ["confirmPassword"],
+    })
+);
+
+const { handleSubmit, isSubmitting } = useForm({
+  validationSchema: formSchema,
+});
+
+const onSubmit = handleSubmit(async (values) => {
+  serverErr.value = null;
+
+  try {
+    const response = await fetch("http://localhost:3000/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: values.email,
+        username: values.email,
+        password: values.password,
+        first_name: values.firstName,
+        last_name: values.lastName,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Błąd rejestracji. Spróbuj ponownie.");
+    }
+
+    console.log("Rejestracja udana:", data);
+
+    if (data.token) {
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      router.push("/dashboard/sensors");
+    }
+  } catch (err: any) {
+    console.error("Błąd podczas rejestracji:", err);
+    serverErr.value = err.message || "Wystąpił nieoczekiwany błąd.";
+  }
+});
 </script>
 
 <template>
@@ -29,7 +98,7 @@ import { Label } from "./ui/label";
       </CardDescription>
     </CardHeader>
     <CardContent>
-      <Form class="space-y-4">
+      <form class="space-y-4" @submit="onSubmit">
         <div class="space-y-2">
           <FormField v-slot="{ componentField }" name="firstName">
             <FormItem class="space-y-2">
@@ -106,8 +175,15 @@ import { Label } from "./ui/label";
             </Label>
           </div>
         </div>
-        <Button type="submit" class="w-full mt-2">Create account</Button>
-      </Form>
+
+        <p v-if="serverErr" class="text-sm font-medium text-destructive">
+          {{ serverErr }}
+        </p>
+
+        <Button type="submit" class="w-full" :disabled="isSubmitting">
+          {{ isSubmitting ? "Creating account..." : "Create account" }}
+        </Button>
+      </form>
       <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-gray-300"></div>
