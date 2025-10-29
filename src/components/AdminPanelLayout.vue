@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { useRouter, RouterView, RouterLink } from "vue-router";
-import { CircleUser, Home, Menu, Package } from "lucide-vue-next";
+import {
+  Activity,
+  Bell,
+  CircleUser,
+  Home,
+  Menu,
+  Package,
+} from "lucide-vue-next";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,16 +30,13 @@ import {
 
 const router = useRouter();
 
-// Pobranie danych użytkownika z localStorage (jeśli są)
 const userRaw = localStorage.getItem("user");
 const user = userRaw ? JSON.parse(userRaw) : { first_name: "Gość", email: "" };
 
 function handleLogout() {
-  // Wyczyść dane logowania
   localStorage.removeItem("authToken");
   localStorage.removeItem("user");
 
-  // Przekieruj do strony logowania
   router.push("/login");
 }
 </script>
@@ -44,17 +48,18 @@ function handleLogout() {
     <div class="hidden border-r bg-muted/40 md:block">
       <div class="flex h-full max-h-screen flex-col gap-2">
         <div class="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <RouterLink
-            to="/dashboard"
-            class="flex items-center gap-2 font-semibold"
-          >
+          <RouterLink to="/panel" class="flex items-center gap-2 font-semibold">
             <Package class="h-6 w-6" />
             <span class="">IoT Monitor</span>
           </RouterLink>
         </div>
         <div class="flex-1">
           <nav class="grid items-start px-2 text-sm font-medium lg:px-4">
-            <RouterLink to="/dashboard/sensors" v-slot="{ isActive }">
+            <RouterLink
+              to="/panel"
+              exact-active-class="bg-muted text-primary"
+              v-slot="{ isActive }"
+            >
               <span
                 :class="[
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
@@ -62,7 +67,37 @@ function handleLogout() {
                 ]"
               >
                 <Home class="h-4 w-4" />
+                Panel Główny
+              </span>
+            </RouterLink>
+            <RouterLink
+              to="/panel/sensors"
+              active-class="bg-muted text-primary"
+              v-slot="{ isActive }"
+            >
+              <span
+                :class="[
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+                  isActive && 'bg-muted text-primary',
+                ]"
+              >
+                <Activity class="h-4 w-4" />
                 Sensory
+              </span>
+            </RouterLink>
+            <RouterLink
+              to="/panel/alerts"
+              active-class="bg-muted text-primary"
+              v-slot="{ isActive }"
+            >
+              <span
+                :class="[
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+                  isActive && 'bg-muted text-primary',
+                ]"
+              >
+                <Bell class="h-4 w-4" />
+                Alerty
               </span>
             </RouterLink>
           </nav>
@@ -84,18 +119,32 @@ function handleLogout() {
           <SheetContent side="left" class="flex flex-col">
             <nav class="grid gap-2 text-lg font-medium">
               <RouterLink
-                to="/dashboard"
+                to="/panel"
                 class="flex items-center gap-2 text-lg font-semibold"
               >
-                <Package class="h-6 w-6" />
+                <LayoutDashboard class="h-6 w-6" />
                 <span class="sr-only">IoT Monitor</span>
               </RouterLink>
               <RouterLink
-                to="/dashboard/sensors"
+                to="/panel"
                 class="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
               >
-                <Home class="h-5 w-5" />
-                Dashboard
+                <LayoutDashboard class="h-5 w-5" />
+                Panel Główny
+              </RouterLink>
+              <RouterLink
+                to="/panel/sensors"
+                class="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+              >
+                <Activity class="h-5 w-5" />
+                Sensory
+              </RouterLink>
+              <RouterLink
+                to="/panel/alerts"
+                class="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+              >
+                <Bell class="h-5 w-5" />
+                Alerty
               </RouterLink>
             </nav>
           </SheetContent>
@@ -106,12 +155,12 @@ function handleLogout() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink as-child>
-                  <RouterLink to="/dashboard">Dashboard</RouterLink>
+                  <RouterLink to="/panel">Panel</RouterLink>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Sensory</BreadcrumbPage>
+                <BreadcrumbPage>{{ $route.name }}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

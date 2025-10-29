@@ -3,6 +3,8 @@ import LoginView from "@/views/LoginView.vue";
 import RegisterView from "@/views/RegisterView.vue";
 import SensorsView from "@/views/SensorsView.vue";
 import AdminPanelLayout from "@/components/AdminPanelLayout.vue";
+import DashboardView from "@/views/DashboardView.vue";
+import AlertsView from "@/views/AlertsView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -10,23 +12,33 @@ const router = createRouter({
     { path: "/login", name: "Login", component: LoginView },
     { path: "/register", name: "Register", component: RegisterView },
     {
-      path: "/dashboard",
-      name: "Dashboard",
+      path: "/panel",
+      name: "Panel",
       component: AdminPanelLayout,
 
       meta: { requiresAuth: true },
-      redirect: "/dashboard/sensors",
+      redirect: "/panel",
       children: [
+        {
+          path: "",
+          name: "MainPanel",
+          component: DashboardView,
+        },
         {
           path: "sensors",
           name: "Sensors",
           component: SensorsView,
         },
+        {
+          path: "alerts",
+          name: "Alerts",
+          component: AlertsView,
+        },
       ],
     },
     {
       path: "/",
-      redirect: "/dashboard",
+      redirect: "/panel",
     },
   ],
 });
@@ -38,7 +50,7 @@ router.beforeEach((to, from, next) => {
   if (requiresAuth && !token) {
     next({ name: "Login" });
   } else if ((to.name === "Login" || to.name === "Register") && token) {
-    next({ name: "Dashboard" });
+    next({ name: "Panel" });
   } else {
     next();
   }

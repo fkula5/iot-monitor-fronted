@@ -80,7 +80,7 @@ const onSubmit = handleSubmit(async (values) => {
     if (data.token) {
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      router.push("/dashboard/sensors");
+      router.push("/panel");
     }
   } catch (err: any) {
     console.error("Błąd podczas rejestracji:", err);
