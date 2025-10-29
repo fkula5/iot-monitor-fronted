@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 import LoginView from "@/views/LoginView.vue";
 import RegisterView from "@/views/RegisterView.vue";
-import Dashboard from "@/views/Dashboard.vue";
 import SensorsView from "@/views/SensorsView.vue";
+import AdminPanelLayout from "@/components/AdminPanelLayout.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,7 +12,7 @@ const router = createRouter({
     {
       path: "/dashboard",
       name: "Dashboard",
-      component: Dashboard,
+      component: AdminPanelLayout,
 
       meta: { requiresAuth: true },
       redirect: "/dashboard/sensors",
