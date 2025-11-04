@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { RouterLink } from "vue-router";
-import { Activity, Bell, Home, Package } from "lucide-vue-next";
+import { Activity, AlertTriangle, Home, Package } from "lucide-vue-next";
 </script>
 
 <template>
@@ -55,7 +55,7 @@ import { Activity, Bell, Home, Package } from "lucide-vue-next";
                 isActive && 'bg-muted text-primary',
               ]"
             >
-              <Bell class="h-4 w-4" />
+              <AlertTriangle class="h-4 w-4" />
               Alerty
             </span>
           </RouterLink>

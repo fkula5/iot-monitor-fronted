@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import {
   Activity,
   AlertCircle,
+  AlertTriangle,
   CheckCircle,
   RefreshCw,
-  TrendingUp,
   XCircle,
 } from "lucide-vue-next";
 
@@ -70,7 +70,7 @@ async function fetchSensors() {
   }
 
   try {
-    const response = await fetch("http://localhost:3000/api/sensors", {
+    const response = await fetch("http://localhost:8080/api/sensors", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -200,8 +200,10 @@ function navigateToSensors() {
       <!-- Types Count -->
       <Card>
         <CardHeader class="flex flex-row items-center justify-between pb-2">
-          <CardTitle class="text-sm font-medium">Typy Sensorów</CardTitle>
-          <TrendingUp class="h-4 w-4 text-muted-foreground" />
+          <CardTitle class="text-sm font-medium">Alerts</CardTitle>
+          <div class="p-2 rounded-lg bg-red-50">
+            <AlertTriangle class="h-4 w-4 text-red-600" />
+          </div>
         </CardHeader>
         <CardContent>
           <div class="text-2xl font-bold">{{ sensorsByType.size }}</div>

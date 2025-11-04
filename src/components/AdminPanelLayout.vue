@@ -8,7 +8,6 @@ import AdminPanelHeader from "./AdminPanelHeader.vue";
     class="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]"
   >
     <AdminPanelSidebar />
-
     <div class="flex flex-col">
       <AdminPanelHeader />
 
