@@ -33,7 +33,6 @@ const sensors = ref<Sensor[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 
-// Obliczenia statystyk
 const stats = computed(() => {
   const total = sensors.value.length;
   const active = sensors.value.filter((s) => s.active).length;
@@ -47,7 +46,6 @@ const stats = computed(() => {
   };
 });
 
-// Sensory pogrupowane według typu
 const sensorsByType = computed(() => {
   const grouped = new Map<number, number>();
   sensors.value.forEach((sensor) => {
@@ -107,7 +105,6 @@ function navigateToSensors() {
 
 <template>
   <div class="space-y-6">
-    <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold tracking-tight">Panel Główny</h1>
@@ -126,14 +123,12 @@ function navigateToSensors() {
       </Button>
     </div>
 
-    <!-- Error Alert -->
     <Alert v-if="error" variant="destructive">
       <AlertCircle class="h-4 w-4" />
       <AlertTitle>Błąd</AlertTitle>
       <AlertDescription>{{ error }}</AlertDescription>
     </Alert>
 
-    <!-- Loading State -->
     <div
       v-if="isLoading && !error"
       class="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
@@ -148,9 +143,7 @@ function navigateToSensors() {
       </Card>
     </div>
 
-    <!-- Stats Cards -->
     <div v-else-if="!error" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <!-- Total Sensors -->
       <Card>
         <CardHeader class="flex flex-row items-center justify-between pb-2">
           <CardTitle class="text-sm font-medium">Wszystkie Sensory</CardTitle>
@@ -164,7 +157,6 @@ function navigateToSensors() {
         </CardContent>
       </Card>
 
-      <!-- Active Sensors -->
       <Card>
         <CardHeader class="flex flex-row items-center justify-between pb-2">
           <CardTitle class="text-sm font-medium">Aktywne</CardTitle>
@@ -183,7 +175,6 @@ function navigateToSensors() {
         </CardContent>
       </Card>
 
-      <!-- Inactive Sensors -->
       <Card>
         <CardHeader class="flex flex-row items-center justify-between pb-2">
           <CardTitle class="text-sm font-medium">Nieaktywne</CardTitle>
@@ -197,7 +188,6 @@ function navigateToSensors() {
         </CardContent>
       </Card>
 
-      <!-- Types Count -->
       <Card>
         <CardHeader class="flex flex-row items-center justify-between pb-2">
           <CardTitle class="text-sm font-medium">Alerts</CardTitle>
@@ -214,7 +204,6 @@ function navigateToSensors() {
       </Card>
     </div>
 
-    <!-- Recent Activity Card -->
     <div v-if="!error && !isLoading" class="grid gap-4 md:grid-cols-2">
       <Card>
         <CardHeader>
@@ -259,7 +248,6 @@ function navigateToSensors() {
         </CardContent>
       </Card>
 
-      <!-- Quick Actions -->
       <Card>
         <CardHeader>
           <CardTitle>Szybkie Akcje</CardTitle>
@@ -294,7 +282,6 @@ function navigateToSensors() {
       </Card>
     </div>
 
-    <!-- Welcome Message for New Users -->
     <Card v-if="!error && !isLoading && sensors.length === 0">
       <CardHeader>
         <CardTitle>Witaj w systemie IoT Monitor!</CardTitle>

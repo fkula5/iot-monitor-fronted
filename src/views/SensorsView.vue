@@ -22,6 +22,8 @@ import {
   AlertCircle,
   RefreshCw,
 } from "lucide-vue-next";
+import type { NewSensor } from "@/components/AddSensor.vue";
+import AddSensor from "@/components/AddSensor.vue";
 
 const router = useRouter();
 
@@ -81,8 +83,6 @@ async function fetchSensors() {
 
     const data = await response.json();
     sensors.value = data || [];
-
-    console.log("Pobrane sensory:", sensors.value);
   } catch (err: any) {
     console.error("Błąd podczas pobierania sensorów:", err);
     error.value = err.message || "Nie udało się pobrać danych sensorów.";
@@ -109,8 +109,55 @@ const filteredSensors = computed(() => {
   );
 });
 
-function goToAddSensorPage() {
-  router.push("/panel/sensors/add");
+const isAddSensorDialogOpen = ref(false);
+
+async function handleAddSensor(newSensor: NewSensor) {
+  isLoading.value = true;
+  error.value = null;
+  const token = localStorage.getItem("authToken");
+
+  if (!token) {
+    error.value = "Nie jesteś zalogowany. Przekierowywanie...";
+    isLoading.value = false;
+    setTimeout(() => router.push("/login"), 2000);
+    return;
+  }
+
+  try {
+    isLoading.value = true;
+
+    const response = await fetch("http://localhost:8080/api/sensors", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(newSensor),
+    });
+
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      error.value = "Sesja wygasła. Proszę zalogować się ponownie.";
+      isLoading.value = false;
+      setTimeout(() => router.push("/login"), 2000);
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(`Błąd dodawania sensoru: ${response.statusText}`);
+    }
+
+    isAddSensorDialogOpen.value = false;
+    error.value = null;
+    isLoading.value = false;
+  } catch (err: any) {
+    error.value = err.message || "Nie udało się dodać sensora.";
+  } finally {
+    isLoading.value = false;
+  }
+
+  await fetchSensors();
 }
 </script>
 
@@ -132,13 +179,23 @@ function goToAddSensorPage() {
       <CardHeader>
         <div class="flex items-center justify-between">
           <CardTitle>Zarządzanie Sensorami</CardTitle>
-          <Button
-            class="flex items-center space-x-2"
-            @click="goToAddSensorPage"
-          >
-            <Plus class="w-4 h-4" />
-            <span>Dodaj Sensor</span>
-          </Button>
+          <div class="flex gap-2">
+            <Button
+              @click="fetchSensors"
+              variant="outline"
+              size="sm"
+              :disabled="isLoading"
+            >
+              <RefreshCw
+                :class="['h-4 w-4 mr-2', isLoading ? 'animate-spin' : '']"
+              />
+              Odśwież
+            </Button>
+            <Button @click="isAddSensorDialogOpen = true" size="sm">
+              <Plus class="h-4 w-4 mr-2" />
+              Dodaj Sensor
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -187,7 +244,9 @@ function goToAddSensorPage() {
           </TableHeader>
           <TableBody>
             <TableRow v-for="sensor in filteredSensors" :key="sensor.id">
-              <TableCell class="font-mono text-sm">{{ sensor.id }}</TableCell>
+              <TableCell class="font-mono text-sm">{{
+                filteredSensors.indexOf(sensor) + 1
+              }}</TableCell>
               <TableCell>{{ sensor.name }}</TableCell>
               <TableCell>{{ sensor.sensor_type.name }}</TableCell>
               <TableCell class="text-sm text-gray-600">
@@ -222,5 +281,10 @@ function goToAddSensorPage() {
         </Table>
       </CardContent>
     </Card>
+    <AddSensor
+      :is-open="isAddSensorDialogOpen"
+      @update:is-open="isAddSensorDialogOpen = $event"
+      @add-sensor="handleAddSensor"
+    />
   </div>
 </template>

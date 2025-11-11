@@ -1,6 +1,12 @@
 <script lang="ts" setup>
 import { useRouter, RouterLink } from "vue-router";
-import { Activity, Bell, CircleUser, Menu } from "lucide-vue-next";
+import {
+  Activity,
+  Bell,
+  CircleUser,
+  LayoutDashboard,
+  Menu,
+} from "lucide-vue-next";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -51,7 +57,6 @@ function handleLogout() {
             to="/panel"
             class="flex items-center gap-2 text-lg font-semibold"
           >
-            <LayoutDashboard class="h-6 w-6" />
             <span class="sr-only">IoT Monitor</span>
           </RouterLink>
           <RouterLink
