@@ -5,6 +5,7 @@ import SensorsView from "@/views/SensorsView.vue";
 import AdminPanelLayout from "@/components/AdminPanelLayout.vue";
 import DashboardView from "@/views/DashboardView.vue";
 import AlertsView from "@/views/AlertsView.vue";
+import SensorDetailView from "@/views/SensorDetailView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -28,6 +29,12 @@ const router = createRouter({
           path: "sensors",
           name: "Sensors",
           component: SensorsView,
+        },
+        {
+          path: "sensors/:id",
+          name: "SensorDetail",
+          component: SensorDetailView,
+          props: true,
         },
         {
           path: "alerts",

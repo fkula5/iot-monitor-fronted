@@ -233,7 +233,7 @@ async function handleAddSensor(newSensor: NewSensor) {
         <Table v-else>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              <TableHead>Nr</TableHead>
               <TableHead>Nazwa</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Lokalizacja</TableHead>
