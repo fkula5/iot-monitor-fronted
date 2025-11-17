@@ -391,8 +391,8 @@ onUnmounted(() => {
             </div>
           </CardContent>
         </Card>
-        <SensorDataChart />
       </div>
+      <SensorDataChart />
     </div>
   </div>
 </template>
