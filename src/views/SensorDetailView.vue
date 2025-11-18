@@ -392,7 +392,25 @@ onUnmounted(() => {
           </CardContent>
         </Card>
       </div>
-      <SensorDataChart />
+      <Card>
+        <CardHeader>
+          <CardTitle>Wykres w czasie rzeczywistym</CardTitle>
+          <CardDescription>
+            Ostatnie {{ MAX_READINGS }} odczytów
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SensorDataChart
+            class="max-h-80"
+            v-if="sensor"
+            :chartData="readings"
+            :sensorInfo="{
+              name: sensor.sensor_type.name,
+              unit: sensor.sensor_type.unit,
+            }"
+          />
+        </CardContent>
+      </Card>
     </div>
   </div>
 </template>

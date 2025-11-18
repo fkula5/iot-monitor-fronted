@@ -17,13 +17,21 @@ import { Badge } from "@/components/ui/badge";
 import {
   Search,
   Plus,
-  Settings,
   MoreHorizontal,
   AlertCircle,
   RefreshCw,
+  Eye,
+  Edit,
+  Trash2,
 } from "lucide-vue-next";
 import type { NewSensor } from "@/components/AddSensor.vue";
 import AddSensor from "@/components/AddSensor.vue";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const router = useRouter();
 
@@ -267,14 +275,32 @@ async function handleAddSensor(newSensor: NewSensor) {
               <TableCell class="font-mono"> N/A </TableCell>
               <TableCell> {{ formatDate(sensor.created_at) }} </TableCell>
               <TableCell>
-                <div class="flex items-center space-x-2">
-                  <Button variant="ghost" size="sm">
-                    <Settings class="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal class="w-4 h-4" />
-                  </Button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <RouterLink
+                      :to="`/panel/sensors/${sensor.id}`"
+                      class="no-underline text-inherit"
+                    >
+                      <DropdownMenuItem>
+                        <Eye class="h-4 w-4 mr-2" />
+                        View Details
+                      </DropdownMenuItem>
+                    </RouterLink>
+                    <DropdownMenuItem>
+                      <Edit class="h-4 w-4 mr-2" />
+                      Edit Sensor
+                    </DropdownMenuItem>
+                    <DropdownMenuItem class="text-red-600">
+                      <Trash2 class="h-4 w-4 mr-2" />
+                      Remove
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           </TableBody>
