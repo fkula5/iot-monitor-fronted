@@ -23,6 +23,8 @@ import {
   Eye,
   Edit,
   Trash2,
+  CheckCircle,
+  XCircle,
 } from "lucide-vue-next";
 import type { NewSensor } from "@/components/AddSensor.vue";
 import AddSensor from "@/components/AddSensor.vue";
@@ -218,18 +220,6 @@ async function handleAddSensor(newSensor: NewSensor) {
               class="pl-10"
             />
           </div>
-          <Button
-            @click="fetchSensors"
-            variant="outline"
-            size="sm"
-            :disabled="isLoading"
-          >
-            <RefreshCw
-              :class="['h-4 w-4', isLoading ? 'animate-spin' : '']"
-              class="mr-2"
-            />
-            Odśwież
-          </Button>
         </div>
 
         <div
@@ -255,7 +245,16 @@ async function handleAddSensor(newSensor: NewSensor) {
               <TableCell class="font-mono text-sm">{{
                 filteredSensors.indexOf(sensor) + 1
               }}</TableCell>
-              <TableCell>{{ sensor.name }}</TableCell>
+              <TableCell>
+                <div class="flex items-center gap-2">
+                  <CheckCircle
+                    v-if="sensor.active"
+                    class="h-4 w-4 text-green-600"
+                  />
+                  <XCircle v-else class="h-4 w-4 text-red-600" />
+                  {{ sensor.name }}
+                </div>
+              </TableCell>
               <TableCell>{{ sensor.sensor_type.name }}</TableCell>
               <TableCell class="text-sm text-gray-600">
                 {{ sensor.location || "Brak" }}
