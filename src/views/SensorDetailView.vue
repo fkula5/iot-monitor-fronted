@@ -27,21 +27,23 @@ import {
 } from "lucide-vue-next";
 import SensorDataChart from "@/components/SensorDataChart.vue";
 
+interface SensorType {
+  id: number;
+  name: string;
+  unit: string;
+  min_value: number;
+  max_value: number;
+  model?: string;
+  manufacturer?: string;
+}
+
 interface SensorData {
   id: number;
   name: string;
   location: string | null;
   description: string | null;
   active: boolean;
-  sensor_type: {
-    id: number;
-    name: string;
-    unit: string;
-    min_value: number;
-    max_value: number;
-    model?: string;
-    manufacturer?: string;
-  };
+  sensor_type: SensorType;
   created_at: string;
   updated_at: string;
 }
@@ -60,35 +62,49 @@ interface ReadingUpdate {
   unit: string;
 }
 
+type ConnectionStatus = "connected" | "disconnected" | "error";
+type Trend = "up" | "down" | "stable";
+
+interface ReadingStats {
+  min: string;
+  max: string;
+  avg: string;
+  count: number;
+  trend: Trend;
+}
+
 const router = useRouter();
 const route = useRoute();
-const sensorId = computed(() => parseInt(route.params.id as string) || 0);
+const sensorId = computed<number>(() => {
+  const id = parseInt(route.params.id as string);
+  return isNaN(id) ? 0 : id;
+});
 
 const sensor = ref<SensorData | null>(null);
 const readings = ref<Reading[]>([]);
 const latestReading = ref<Reading | null>(null);
-const isLoading = ref(true);
+const isLoading = ref<boolean>(true);
 const error = ref<string | null>(null);
 
 const ws = ref<WebSocket | null>(null);
-const isConnecting = ref(false);
-const connectionStatus = ref<"connected" | "disconnected" | "error">(
-  "disconnected"
-);
-const reconnectAttempts = ref(0);
+const isConnecting = ref<boolean>(false);
+const connectionStatus = ref<ConnectionStatus>("disconnected");
+const reconnectAttempts = ref<number>(0);
 const MAX_RECONNECT_ATTEMPTS = 5;
 const MAX_READINGS = 50;
 
 function parseTimestamp(input: any): Date {
   if (!input) return new Date(NaN);
+
   const num = Number(input);
   if (!isNaN(num)) {
     return num < 10000000000 ? new Date(num * 1000) : new Date(num);
   }
+
   return new Date(input);
 }
 
-function formatDate(dateString: string) {
+function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleString("pl-PL", {
     year: "numeric",
     month: "long",
@@ -112,15 +128,15 @@ function formatRelativeTime(date: Date): string {
   return `${diffDay}d temu`;
 }
 
-const readingStats = computed(() => {
+const readingStats = computed<ReadingStats | null>(() => {
   if (readings.value.length === 0) return null;
 
   const values = readings.value.map((r) => r.value);
   const min = Math.min(...values);
   const max = Math.max(...values);
   const avg = values.reduce((a, b) => a + b, 0) / values.length;
+  let trend: Trend = "stable";
 
-  let trend: "up" | "down" | "stable" = "stable";
   if (readings.value.length >= 20) {
     const recent = readings.value.slice(-10);
     const previous = readings.value.slice(-20, -10);
@@ -141,14 +157,14 @@ const readingStats = computed(() => {
   };
 });
 
-const isValueInRange = computed(() => {
+const isValueInRange = computed<boolean>(() => {
   if (!latestReading.value || !sensor.value) return true;
   const val = latestReading.value.value;
   const { min_value, max_value } = sensor.value.sensor_type;
   return val >= min_value && val <= max_value;
 });
 
-async function fetchSensor() {
+async function fetchSensor(): Promise<void> {
   const token = localStorage.getItem("authToken");
   if (!token) {
     error.value = "Nie jesteś zalogowany";
@@ -187,7 +203,7 @@ async function fetchSensor() {
   }
 }
 
-async function fetchHistory() {
+async function fetchHistory(): Promise<void> {
   if (!sensorId.value) return;
 
   try {
@@ -211,30 +227,39 @@ async function fetchHistory() {
     }
 
     const data = await response.json();
-    const items = Array.isArray(data) ? data : data.readings || [];
+    const items: ReadingUpdate[] = Array.isArray(data)
+      ? data
+      : data.readings || [];
 
-    const formattedReadings = items
-      .map((item: ReadingUpdate) => ({
-        timestamp: parseTimestamp(item.timestamp),
-        value: parseFloat(item.value.toString()),
-      }))
-      .filter((r: Reading) => !isNaN(r.timestamp.getTime()) && !isNaN(r.value))
-      .sort(
-        (a: Reading, b: Reading) =>
-          a.timestamp.getTime() - b.timestamp.getTime()
-      );
+    const formattedReadings: Reading[] = items
+      .map((item: ReadingUpdate): Reading | null => {
+        const timestamp = parseTimestamp(item.timestamp);
+        const value = parseFloat(item.value.toString());
+
+        if (isNaN(timestamp.getTime()) || isNaN(value)) {
+          return null;
+        }
+
+        return { timestamp, value };
+      })
+      .filter((r): r is Reading => r !== null)
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     readings.value = formattedReadings;
 
     if (readings.value.length > 0) {
-      latestReading.value = readings.value[readings.value.length - 1];
+      const lastIndex = readings.value.length - 1;
+      const lastReading = readings.value[lastIndex];
+      latestReading.value = lastReading !== undefined ? lastReading : null;
+    } else {
+      latestReading.value = null;
     }
   } catch (err) {
     console.error("Failed to fetch history:", err);
   }
 }
 
-function connectWebSocket() {
+function connectWebSocket(): void {
   if (ws.value?.readyState === WebSocket.OPEN) return;
   if (!sensorId.value) return;
   if (reconnectAttempts.value >= MAX_RECONNECT_ATTEMPTS) {
@@ -257,21 +282,20 @@ function connectWebSocket() {
       error.value = null;
     };
 
-    ws.value.onmessage = (event) => {
+    ws.value.onmessage = (event: MessageEvent) => {
       try {
-        const data = JSON.parse(event.data);
+        const data: ReadingUpdate = JSON.parse(event.data);
 
         if (data.sensor_id == sensorId.value) {
-          const reading: Reading = {
-            timestamp: parseTimestamp(data.timestamp),
-            value: parseFloat(data.value),
-          };
+          const timestamp = parseTimestamp(data.timestamp);
+          const value = parseFloat(data.value.toString());
 
-          if (isNaN(reading.timestamp.getTime()) || isNaN(reading.value)) {
+          if (isNaN(timestamp.getTime()) || isNaN(value)) {
             console.warn("Invalid reading received:", data);
             return;
           }
 
+          const reading: Reading = { timestamp, value };
           latestReading.value = reading;
           readings.value.push(reading);
 
@@ -284,13 +308,13 @@ function connectWebSocket() {
       }
     };
 
-    ws.value.onerror = (err) => {
+    ws.value.onerror = (err: Event) => {
       console.error("WebSocket error:", err);
       connectionStatus.value = "error";
       isConnecting.value = false;
     };
 
-    ws.value.onclose = (event) => {
+    ws.value.onclose = (event: CloseEvent) => {
       console.log("WebSocket disconnected:", event.code, event.reason);
       connectionStatus.value = "disconnected";
       isConnecting.value = false;
@@ -319,7 +343,7 @@ function connectWebSocket() {
   }
 }
 
-function disconnectWebSocket() {
+function disconnectWebSocket(): void {
   if (ws.value) {
     connectionStatus.value = "disconnected";
     ws.value.close();
@@ -328,7 +352,7 @@ function disconnectWebSocket() {
   reconnectAttempts.value = 0;
 }
 
-function manualReconnect() {
+function manualReconnect(): void {
   disconnectWebSocket();
   reconnectAttempts.value = 0;
   connectWebSocket();
@@ -511,14 +535,8 @@ onUnmounted(() => {
             <CardTitle class="text-3xl flex items-center gap-2">
               {{ readingStats?.count || 0 }}
               <component
-                v-if="readingStats?.trend"
-                :is="
-                  readingStats.trend === 'up'
-                    ? TrendingUp
-                    : readingStats.trend === 'down'
-                    ? TrendingDown
-                    : null
-                "
+                v-if="readingStats?.trend && readingStats.trend !== 'stable'"
+                :is="readingStats.trend === 'up' ? TrendingUp : TrendingDown"
                 :class="[
                   'h-6 w-6',
                   readingStats.trend === 'up'
