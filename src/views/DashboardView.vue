@@ -107,18 +107,19 @@ function navigateToSensors() {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold tracking-tight">Panel Główny</h1>
-        <p class="text-muted-foreground mt-1">
-          Przegląd systemu monitorowania IoT
-        </p>
+        <h1 class="text-3xl font-bold tracking-tight text-gray-900">
+          Panel Główny
+        </h1>
+        <p class="text-gray-600 mt-2">Przegląd systemu monitorowania IoT</p>
       </div>
       <Button
         @click="fetchSensors"
         variant="outline"
-        size="sm"
+        size="default"
         :disabled="isLoading"
+        class="gap-2"
       >
-        <RefreshCw :class="['h-4 w-4 mr-2', isLoading ? 'animate-spin' : '']" />
+        <RefreshCw :class="['h-4 w-4', isLoading ? 'animate-spin' : '']" />
         Odśwież
       </Button>
     </div>
@@ -131,42 +132,49 @@ function navigateToSensors() {
 
     <div
       v-if="isLoading && !error"
-      class="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+      class="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
     >
       <Card v-for="i in 4" :key="i" class="animate-pulse">
         <CardHeader class="pb-3">
-          <div class="h-4 bg-muted rounded w-24"></div>
+          <div class="h-4 bg-gray-200 rounded w-24"></div>
         </CardHeader>
         <CardContent>
-          <div class="h-8 bg-muted rounded w-16"></div>
+          <div class="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+          <div class="h-3 bg-gray-100 rounded w-32"></div>
         </CardContent>
       </Card>
     </div>
 
-    <div v-else-if="!error" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
+    <div v-else-if="!error" class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <Card class="hover:shadow-md transition-shadow">
         <CardHeader class="flex flex-row items-center justify-between pb-2">
-          <CardTitle class="text-sm font-medium">Wszystkie Sensory</CardTitle>
-          <Activity class="h-4 w-4 text-muted-foreground" />
+          <CardTitle class="text-sm font-medium text-gray-600">
+            Wszystkie Sensory
+          </CardTitle>
+          <div class="p-2 bg-blue-50 rounded-lg">
+            <Activity class="h-5 w-5 text-blue-600" />
+          </div>
         </CardHeader>
         <CardContent>
-          <div class="text-2xl font-bold">{{ stats.total }}</div>
-          <p class="text-xs text-muted-foreground mt-1">
-            Łączna liczba sensorów
-          </p>
+          <div class="text-3xl font-bold text-gray-900">{{ stats.total }}</div>
+          <p class="text-xs text-gray-500 mt-1">Łączna liczba sensorów</p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card class="hover:shadow-md transition-shadow">
         <CardHeader class="flex flex-row items-center justify-between pb-2">
-          <CardTitle class="text-sm font-medium">Aktywne</CardTitle>
-          <CheckCircle class="h-4 w-4 text-green-600" />
+          <CardTitle class="text-sm font-medium text-gray-600">
+            Aktywne
+          </CardTitle>
+          <div class="p-2 bg-green-50 rounded-lg">
+            <CheckCircle class="h-5 w-5 text-green-600" />
+          </div>
         </CardHeader>
         <CardContent>
-          <div class="text-2xl font-bold text-green-600">
+          <div class="text-3xl font-bold text-green-600">
             {{ stats.active }}
           </div>
-          <p class="text-xs text-muted-foreground mt-1">
+          <p class="text-xs text-gray-500 mt-1">
             <span class="text-green-600 font-medium">
               {{ stats.activePercentage }}%
             </span>
@@ -175,39 +183,45 @@ function navigateToSensors() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card class="hover:shadow-md transition-shadow">
         <CardHeader class="flex flex-row items-center justify-between pb-2">
-          <CardTitle class="text-sm font-medium">Nieaktywne</CardTitle>
-          <XCircle class="h-4 w-4 text-red-600" />
+          <CardTitle class="text-sm font-medium text-gray-600">
+            Nieaktywne
+          </CardTitle>
+          <div class="p-2 bg-red-50 rounded-lg">
+            <XCircle class="h-5 w-5 text-red-600" />
+          </div>
         </CardHeader>
         <CardContent>
-          <div class="text-2xl font-bold text-red-600">
+          <div class="text-3xl font-bold text-red-600">
             {{ stats.inactive }}
           </div>
-          <p class="text-xs text-muted-foreground mt-1">Wymagają uwagi</p>
+          <p class="text-xs text-gray-500 mt-1">Wymagają uwagi</p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card class="hover:shadow-md transition-shadow">
         <CardHeader class="flex flex-row items-center justify-between pb-2">
-          <CardTitle class="text-sm font-medium">Alerts</CardTitle>
-          <div class="p-2 rounded-lg bg-red-50">
-            <AlertTriangle class="h-4 w-4 text-red-600" />
+          <CardTitle class="text-sm font-medium text-gray-600">
+            Typy Urządzeń
+          </CardTitle>
+          <div class="p-2 bg-purple-50 rounded-lg">
+            <AlertTriangle class="h-5 w-5 text-purple-600" />
           </div>
         </CardHeader>
         <CardContent>
-          <div class="text-2xl font-bold">{{ sensorsByType.size }}</div>
-          <p class="text-xs text-muted-foreground mt-1">
-            Różnych typów urządzeń
-          </p>
+          <div class="text-3xl font-bold text-gray-900">
+            {{ sensorsByType.size }}
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Różnych kategorii</p>
         </CardContent>
       </Card>
     </div>
 
-    <div v-if="!error && !isLoading" class="grid gap-4 md:grid-cols-2">
+    <div v-if="!error && !isLoading" class="grid gap-6 md:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Ostatnia Aktywność</CardTitle>
+          <CardTitle class="text-gray-900">Ostatnia Aktywność</CardTitle>
           <CardDescription>
             Najnowsze zmiany w systemie monitorowania
           </CardDescription>
@@ -216,7 +230,7 @@ function navigateToSensors() {
           <div class="space-y-4">
             <div
               v-if="sensors.length === 0"
-              class="text-sm text-muted-foreground text-center py-8"
+              class="text-sm text-gray-500 text-center py-8"
             >
               Brak aktywności do wyświetlenia
             </div>
@@ -224,19 +238,19 @@ function navigateToSensors() {
               v-else
               v-for="sensor in sensors.slice(0, 5)"
               :key="sensor.id"
-              class="flex items-center gap-4"
+              class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div
                 :class="[
                   'h-2 w-2 rounded-full',
-                  sensor.active ? 'bg-green-600' : 'bg-red-600',
+                  sensor.active ? 'bg-green-500' : 'bg-red-500',
                 ]"
               />
               <div class="flex-1 space-y-1">
-                <p class="text-sm font-medium leading-none">
+                <p class="text-sm font-medium text-gray-900">
                   {{ sensor.name }}
                 </p>
-                <p class="text-sm text-muted-foreground">
+                <p class="text-xs text-gray-500">
                   {{ sensor.location || "Brak lokalizacji" }}
                 </p>
               </div>
@@ -250,51 +264,61 @@ function navigateToSensors() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Szybkie Akcje</CardTitle>
+          <CardTitle class="text-gray-900">Szybkie Akcje</CardTitle>
           <CardDescription> Często używane funkcje systemu </CardDescription>
         </CardHeader>
-        <CardContent class="space-y-2">
+        <CardContent class="space-y-3">
           <Button
             @click="navigateToSensors"
             variant="outline"
-            class="w-full justify-start"
+            class="w-full justify-start gap-2"
           >
-            <Activity class="mr-2 h-4 w-4" />
+            <Activity class="h-4 w-4" />
             Zarządzaj Sensorami
           </Button>
           <Button
             @click="router.push('/panel/alerts')"
             variant="outline"
-            class="w-full justify-start"
+            class="w-full justify-start gap-2"
           >
-            <AlertCircle class="mr-2 h-4 w-4" />
+            <AlertCircle class="h-4 w-4" />
             Przeglądaj Alerty
           </Button>
           <Button
             @click="fetchSensors"
             variant="outline"
-            class="w-full justify-start"
+            class="w-full justify-start gap-2"
           >
-            <RefreshCw class="mr-2 h-4 w-4" />
+            <RefreshCw class="h-4 w-4" />
             Odśwież Dane
           </Button>
         </CardContent>
       </Card>
     </div>
 
-    <Card v-if="!error && !isLoading && sensors.length === 0">
+    <Card
+      v-if="!error && !isLoading && sensors.length === 0"
+      class="text-center"
+    >
       <CardHeader>
-        <CardTitle>Witaj w systemie IoT Monitor!</CardTitle>
+        <CardTitle class="text-gray-900"
+          >Witaj w systemie IoT Monitor!</CardTitle
+        >
         <CardDescription>
           Rozpocznij konfigurację swojego systemu monitorowania
         </CardDescription>
       </CardHeader>
-      <CardContent class="space-y-4">
-        <p class="text-sm text-muted-foreground">
+      <CardContent class="space-y-4 py-8">
+        <div
+          class="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center"
+        >
+          <Activity class="h-8 w-8 text-blue-600" />
+        </div>
+        <p class="text-sm text-gray-600 max-w-md mx-auto">
           Nie masz jeszcze żadnych sensorów. Skontaktuj się z administratorem,
           aby dodać pierwsze urządzenia do monitorowania.
         </p>
-        <div class="flex gap-2">
+        <div class="flex gap-3 justify-center">
           <Button @click="navigateToSensors"> Przejdź do Sensorów </Button>
           <Button variant="outline" @click="fetchSensors">
             Odśwież Listę
