@@ -20,13 +20,12 @@ import {
   RefreshCw,
   Calendar,
   Package,
+  TrendingUp,
+  TrendingDown,
+  Wifi,
+  WifiOff,
 } from "lucide-vue-next";
 import SensorDataChart from "@/components/SensorDataChart.vue";
-
-interface RecentEvent {
-  message: string;
-  time: string;
-}
 
 interface SensorData {
   id: number;
@@ -41,6 +40,7 @@ interface SensorData {
     min_value: number;
     max_value: number;
     model?: string;
+    manufacturer?: string;
   };
   created_at: string;
   updated_at: string;
@@ -51,7 +51,6 @@ interface Reading {
   value: number;
 }
 
-// NEW: Response types matching new backend
 interface ReadingUpdate {
   sensor_id: number;
   value: number;
@@ -61,16 +60,9 @@ interface ReadingUpdate {
   unit: string;
 }
 
-interface LatestReadingsBatchResponse {
-  readings: ReadingUpdate[];
-}
-
 const router = useRouter();
 const route = useRoute();
-const sensorId = computed(() => {
-  const id = parseInt(route.params.id as string);
-  return isNaN(id) ? 0 : id;
-});
+const sensorId = computed(() => parseInt(route.params.id as string) || 0);
 
 const sensor = ref<SensorData | null>(null);
 const readings = ref<Reading[]>([]);
@@ -83,36 +75,41 @@ const isConnecting = ref(false);
 const connectionStatus = ref<"connected" | "disconnected" | "error">(
   "disconnected"
 );
+const reconnectAttempts = ref(0);
+const MAX_RECONNECT_ATTEMPTS = 5;
 const MAX_READINGS = 50;
-
-const recentEvents = ref<RecentEvent[]>([
-  {
-    message: "Temperatura osiągnęła górny próg ostrzegawczy (24.8°C).",
-    time: "10 minut temu",
-  },
-  { message: "Wrócono do normalnych warunków pracy.", time: "5 minut temu" },
-  { message: "Zaktualizowano oprogramowanie do v2.4.1.", time: "1 dzień temu" },
-  { message: "Poziom wilgotności przekroczył 80% RH.", time: "2 dni temu" },
-  {
-    message: "Pomyślnie przeprowadzono automatyczny test diagnostyczny.",
-    time: "3 dni temu",
-  },
-  { message: "Sensor został zrestartowany zdalnie.", time: "1 tydzień temu" },
-]);
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleString("pl-PL");
-}
 
 function parseTimestamp(input: any): Date {
   if (!input) return new Date(NaN);
-
   const num = Number(input);
   if (!isNaN(num)) {
     return num < 10000000000 ? new Date(num * 1000) : new Date(num);
   }
-
   return new Date(input);
+}
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleString("pl-PL", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffSec < 60) return `${diffSec}s temu`;
+  if (diffMin < 60) return `${diffMin}m temu`;
+  if (diffHour < 24) return `${diffHour}h temu`;
+  return `${diffDay}d temu`;
 }
 
 const readingStats = computed(() => {
@@ -123,13 +120,72 @@ const readingStats = computed(() => {
   const max = Math.max(...values);
   const avg = values.reduce((a, b) => a + b, 0) / values.length;
 
+  let trend: "up" | "down" | "stable" = "stable";
+  if (readings.value.length >= 20) {
+    const recent = readings.value.slice(-10);
+    const previous = readings.value.slice(-20, -10);
+    const recentAvg = recent.reduce((a, b) => a + b.value, 0) / recent.length;
+    const prevAvg = previous.reduce((a, b) => a + b.value, 0) / previous.length;
+    const diff = recentAvg - prevAvg;
+    if (Math.abs(diff) > (max - min) * 0.05) {
+      trend = diff > 0 ? "up" : "down";
+    }
+  }
+
   return {
     min: min.toFixed(2),
     max: max.toFixed(2),
     avg: avg.toFixed(2),
     count: readings.value.length,
+    trend,
   };
 });
+
+const isValueInRange = computed(() => {
+  if (!latestReading.value || !sensor.value) return true;
+  const val = latestReading.value.value;
+  const { min_value, max_value } = sensor.value.sensor_type;
+  return val >= min_value && val <= max_value;
+});
+
+async function fetchSensor() {
+  const token = localStorage.getItem("authToken");
+  if (!token) {
+    error.value = "Nie jesteś zalogowany";
+    router.push("/login");
+    return;
+  }
+
+  try {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await fetch(
+      `http://localhost:8080/api/sensors/${sensorId.value}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (response.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      router.push("/login");
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(`Błąd serwera: ${response.status}`);
+    }
+
+    sensor.value = await response.json();
+  } catch (err: any) {
+    console.error("Fetch sensor error:", err);
+    error.value = err.message || "Nie udało się pobrać danych sensora";
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 async function fetchHistory() {
   if (!sensorId.value) return;
@@ -150,26 +206,18 @@ async function fetchHistory() {
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Server error:", response.status, errorText);
+      console.error("History fetch failed:", response.status);
       return;
     }
 
     const data = await response.json();
-
-    console.log("Raw API Response:", data);
-
     const items = Array.isArray(data) ? data : data.readings || [];
 
     const formattedReadings = items
-      .map((item: ReadingUpdate) => {
-        const val = parseFloat(item.value.toString());
-        const date = parseTimestamp(item.timestamp);
-        return {
-          timestamp: date,
-          value: val,
-        };
-      })
+      .map((item: ReadingUpdate) => ({
+        timestamp: parseTimestamp(item.timestamp),
+        value: parseFloat(item.value.toString()),
+      }))
       .filter((r: Reading) => !isNaN(r.timestamp.getTime()) && !isNaN(r.value))
       .sort(
         (a: Reading, b: Reading) =>
@@ -179,67 +227,34 @@ async function fetchHistory() {
     readings.value = formattedReadings;
 
     if (readings.value.length > 0) {
-      latestReading.value = readings.value[readings.value.length - 1] || null;
+      latestReading.value = readings.value[readings.value.length - 1];
     }
   } catch (err) {
-    console.error("Failed to fetch history", err);
-  }
-}
-
-async function fetchSensor() {
-  const token = localStorage.getItem("authToken");
-  if (!token) {
-    error.value = "Nie jesteś zalogowany";
-    router.push("/login");
-    return;
-  }
-
-  try {
-    isLoading.value = true;
-    const response = await fetch(
-      `http://localhost:8080/api/sensors/${sensorId.value}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-
-    if (response.status === 401) {
-      localStorage.removeItem("authToken");
-      router.push("/login");
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error("Nie udało się pobrać danych sensora");
-    }
-
-    sensor.value = await response.json();
-  } catch (err: any) {
-    error.value = err.message;
-  } finally {
-    isLoading.value = false;
+    console.error("Failed to fetch history:", err);
   }
 }
 
 function connectWebSocket() {
   if (ws.value?.readyState === WebSocket.OPEN) return;
   if (!sensorId.value) return;
-
-  const token = localStorage.getItem("authToken");
-  if (!token) return;
+  if (reconnectAttempts.value >= MAX_RECONNECT_ATTEMPTS) {
+    error.value = "Przekroczono maksymalną liczbę prób połączenia";
+    return;
+  }
 
   isConnecting.value = true;
   connectionStatus.value = "disconnected";
 
   try {
-    ws.value = new WebSocket(
-      `ws://localhost:8080/api/data/ws/readings?sensor_ids=${sensorId.value}`
-    );
+    const wsUrl = `ws://localhost:8080/api/data/ws/readings?sensor_ids=${sensorId.value}`;
+    ws.value = new WebSocket(wsUrl);
 
     ws.value.onopen = () => {
-      console.log("WebSocket connected");
+      console.log("✓ WebSocket connected");
       connectionStatus.value = "connected";
       isConnecting.value = false;
+      reconnectAttempts.value = 0;
+      error.value = null;
     };
 
     ws.value.onmessage = (event) => {
@@ -253,7 +268,7 @@ function connectWebSocket() {
           };
 
           if (isNaN(reading.timestamp.getTime()) || isNaN(reading.value)) {
-            console.warn("Received invalid WS reading:", data);
+            console.warn("Invalid reading received:", data);
             return;
           }
 
@@ -265,28 +280,37 @@ function connectWebSocket() {
           }
         }
       } catch (err) {
-        console.error("Error parsing WebSocket message:", err);
+        console.error("WebSocket message parse error:", err);
       }
     };
 
-    ws.value.onerror = (error) => {
-      console.error("WebSocket error:", error);
+    ws.value.onerror = (err) => {
+      console.error("WebSocket error:", err);
       connectionStatus.value = "error";
       isConnecting.value = false;
     };
 
-    ws.value.onclose = () => {
-      console.log("WebSocket disconnected");
-      if (connectionStatus.value !== "disconnected") {
-        connectionStatus.value = "disconnected";
-      }
+    ws.value.onclose = (event) => {
+      console.log("WebSocket disconnected:", event.code, event.reason);
+      connectionStatus.value = "disconnected";
       isConnecting.value = false;
 
-      setTimeout(() => {
-        if (!ws.value || ws.value.readyState === WebSocket.CLOSED) {
-          if (sensor.value) connectWebSocket();
-        }
-      }, 5000);
+      if (reconnectAttempts.value < MAX_RECONNECT_ATTEMPTS && sensor.value) {
+        reconnectAttempts.value++;
+        const delay = Math.min(
+          1000 * Math.pow(2, reconnectAttempts.value),
+          30000
+        );
+        console.log(
+          `Reconnecting in ${delay}ms (attempt ${reconnectAttempts.value}/${MAX_RECONNECT_ATTEMPTS})`
+        );
+
+        setTimeout(() => {
+          if (!ws.value || ws.value.readyState === WebSocket.CLOSED) {
+            connectWebSocket();
+          }
+        }, delay);
+      }
     };
   } catch (err) {
     console.error("Failed to create WebSocket:", err);
@@ -301,18 +325,27 @@ function disconnectWebSocket() {
     ws.value.close();
     ws.value = null;
   }
+  reconnectAttempts.value = 0;
+}
+
+function manualReconnect() {
+  disconnectWebSocket();
+  reconnectAttempts.value = 0;
+  connectWebSocket();
 }
 
 onMounted(async () => {
-  if (sensorId.value) {
-    await fetchSensor();
-    if (sensor.value) {
-      await fetchHistory();
-      connectWebSocket();
-    }
-  } else {
+  if (!sensorId.value) {
     error.value = "Nieprawidłowe ID sensora";
     isLoading.value = false;
+    return;
+  }
+
+  await fetchSensor();
+
+  if (sensor.value) {
+    await fetchHistory();
+    connectWebSocket();
   }
 });
 
@@ -337,9 +370,12 @@ onUnmounted(() => {
           <h1 class="text-3xl font-bold tracking-tight">
             {{ sensor?.name || "Sensor" }}
           </h1>
-          <p class="text-muted-foreground mt-1">Dane w czasie rzeczywistym</p>
+          <p class="text-muted-foreground mt-1">
+            {{ sensor?.sensor_type.name }} - Dane w czasie rzeczywistym
+          </p>
         </div>
       </div>
+
       <div class="flex items-center gap-2">
         <Badge
           :variant="
@@ -350,7 +386,8 @@ onUnmounted(() => {
               : 'secondary'
           "
         >
-          <Activity
+          <component
+            :is="connectionStatus === 'connected' ? Wifi : WifiOff"
             :class="[
               'h-3 w-3 mr-1',
               connectionStatus === 'connected' && 'animate-pulse',
@@ -360,12 +397,13 @@ onUnmounted(() => {
             connectionStatus === "connected"
               ? "Połączono"
               : connectionStatus === "error"
-              ? "Błąd połączenia"
+              ? "Błąd"
               : "Rozłączono"
           }}
         </Badge>
+
         <Button
-          @click="connectWebSocket"
+          @click="manualReconnect"
           variant="outline"
           size="sm"
           :disabled="isConnecting || connectionStatus === 'connected'"
@@ -373,7 +411,7 @@ onUnmounted(() => {
           <RefreshCw
             :class="['h-4 w-4 mr-2', isConnecting && 'animate-spin']"
           />
-          Połącz
+          Połącz ponownie
         </Button>
       </div>
     </div>
@@ -401,15 +439,37 @@ onUnmounted(() => {
           <CardContent class="pt-6">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-gray-600">Aktualny odczyt</p>
-                <p class="text-2xl mt-1">
-                  {{ latestReading ? latestReading.value.toFixed(2) : "---" }}
-                  <span class="text-lg text-muted-foreground ml-1">
+                <p class="text-sm text-muted-foreground">Aktualny odczyt</p>
+                <div class="flex items-baseline gap-2 mt-1">
+                  <p class="text-3xl font-bold">
+                    {{ latestReading ? latestReading.value.toFixed(2) : "---" }}
+                  </p>
+                  <span class="text-lg text-muted-foreground">
                     {{ sensor.sensor_type.unit }}
                   </span>
+                </div>
+                <p
+                  v-if="latestReading"
+                  class="text-xs text-muted-foreground mt-1"
+                >
+                  {{ formatRelativeTime(latestReading.timestamp) }}
                 </p>
               </div>
-              <Activity class="h-8 w-8 text-blue-600" />
+              <div
+                :class="[
+                  'p-3 rounded-lg',
+                  isValueInRange
+                    ? 'bg-green-100 dark:bg-green-900/30'
+                    : 'bg-red-100 dark:bg-red-900/30',
+                ]"
+              >
+                <Activity
+                  :class="[
+                    'h-6 w-6',
+                    isValueInRange ? 'text-green-600' : 'text-red-600',
+                  ]"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -446,120 +506,132 @@ onUnmounted(() => {
           <CardHeader class="pb-3">
             <CardDescription class="flex items-center gap-2">
               <Clock class="h-4 w-4" />
-              Odczyty
+              Trend
             </CardDescription>
-            <CardTitle class="text-3xl">
+            <CardTitle class="text-3xl flex items-center gap-2">
               {{ readingStats?.count || 0 }}
+              <component
+                v-if="readingStats?.trend"
+                :is="
+                  readingStats.trend === 'up'
+                    ? TrendingUp
+                    : readingStats.trend === 'down'
+                    ? TrendingDown
+                    : null
+                "
+                :class="[
+                  'h-6 w-6',
+                  readingStats.trend === 'up'
+                    ? 'text-red-600'
+                    : 'text-blue-600',
+                ]"
+              />
             </CardTitle>
           </CardHeader>
         </Card>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card class="shadow-lg">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card class="lg:col-span-1">
           <CardHeader>
-            <CardTitle class="text-xl">Informacje o Sensorze</CardTitle>
+            <CardTitle>Informacje</CardTitle>
           </CardHeader>
           <CardContent class="space-y-4">
             <div class="flex items-start gap-3">
-              <Package class="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Typ Sensora</p>
-                <p class="font-medium text-gray-800">
-                  {{ sensor.sensor_type.model }}
+              <Package
+                class="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-muted-foreground">Model</p>
+                <p class="font-medium truncate">
+                  {{ sensor.sensor_type.model || sensor.sensor_type.name }}
+                </p>
+                <p
+                  v-if="sensor.sensor_type.manufacturer"
+                  class="text-xs text-muted-foreground"
+                >
+                  {{ sensor.sensor_type.manufacturer }}
                 </p>
               </div>
             </div>
 
             <div class="flex items-start gap-3">
-              <MapPin class="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Lokalizacja Instalacji</p>
-                <p class="font-medium text-gray-800">{{ sensor.location }}</p>
+              <MapPin
+                class="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-muted-foreground">Lokalizacja</p>
+                <p class="font-medium">
+                  {{ sensor.location || "Nie określono" }}
+                </p>
               </div>
             </div>
 
             <div class="flex items-start gap-3">
-              <Calendar class="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Data Instalacji</p>
-                <p class="font-medium text-gray-800">
+              <Calendar
+                class="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-muted-foreground">Utworzono</p>
+                <p class="font-medium text-sm">
                   {{ formatDate(sensor.created_at) }}
                 </p>
               </div>
             </div>
 
             <div class="flex items-start gap-3">
-              <Clock class="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Ostatnia Kalibracja</p>
-                <p class="font-medium text-gray-800">
-                  {{ formatDate(sensor.created_at) }}
+              <Activity
+                class="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0"
+              />
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-muted-foreground">Zakres</p>
+                <p class="font-medium">
+                  {{ sensor.sensor_type.min_value }} -
+                  {{ sensor.sensor_type.max_value }}
+                  {{ sensor.sensor_type.unit }}
                 </p>
               </div>
             </div>
 
-            <div
-              v-if="sensor.description"
-              class="pt-4 border-t border-gray-200"
-            >
-              <p class="text-sm text-gray-600 mb-1">Opis</p>
-              <p class="text-sm italic text-gray-700">
-                {{ sensor.description }}
-              </p>
+            <div v-if="sensor.description" class="pt-4 border-t">
+              <p class="text-sm text-muted-foreground mb-1">Opis</p>
+              <p class="text-sm">{{ sensor.description }}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card class="shadow-lg">
+        <Card class="lg:col-span-2">
           <CardHeader>
-            <CardTitle class="text-xl">Ostatnie Wydarzenia</CardTitle>
+            <CardTitle>Wykres w czasie rzeczywistym</CardTitle>
+            <CardDescription>
+              Ostatnie {{ MAX_READINGS }} odczytów
+              <span v-if="readingStats" class="ml-2">
+                ({{ readingStats.count }} wartości)
+              </span>
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div class="space-y-4">
-              <div
-                v-for="(event, index) in recentEvents"
-                :key="index"
-                class="flex gap-3 items-start"
-              >
-                <div
-                  class="w-2 h-2 rounded-full bg-blue-600 mt-2 flex-shrink-0"
-                ></div>
-                <div class="flex-1">
-                  <p class="text-sm font-medium">{{ event.message }}</p>
-                  <p class="text-xs text-gray-500">{{ event.time }}</p>
-                </div>
-              </div>
-
-              <div
-                v-if="recentEvents.length === 0"
-                class="text-center text-gray-500 py-4"
-              >
-                Brak ostatnich wydarzeń do wyświetlenia.
+            <div
+              v-if="readings.length === 0"
+              class="flex items-center justify-center h-64 text-muted-foreground"
+            >
+              <div class="text-center">
+                <Activity class="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Oczekiwanie na dane...</p>
               </div>
             </div>
+            <SensorDataChart
+              v-else
+              class="h-80"
+              :chartData="readings"
+              :sensorInfo="{
+                name: sensor.sensor_type.name,
+                unit: sensor.sensor_type.unit,
+              }"
+            />
           </CardContent>
         </Card>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Wykres w czasie rzeczywistym</CardTitle>
-          <CardDescription>
-            Ostatnie {{ MAX_READINGS }} odczytów
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SensorDataChart
-            class="max-h-80"
-            v-if="sensor"
-            :chartData="readings"
-            :sensorInfo="{
-              name: sensor.sensor_type.name,
-              unit: sensor.sensor_type.unit,
-            }"
-          />
-        </CardContent>
-      </Card>
     </div>
   </div>
 </template>
