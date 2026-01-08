@@ -6,6 +6,7 @@ import AdminPanelLayout from "@/components/AdminPanelLayout.vue";
 import DashboardView from "@/views/DashboardView.vue";
 import AlertsView from "@/views/AlertsView.vue";
 import SensorDetailView from "@/views/SensorDetailView.vue";
+import SensorGroupsView from "@/views/SensorGroupsView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,7 +17,6 @@ const router = createRouter({
       path: "/panel",
       name: "Panel",
       component: AdminPanelLayout,
-
       meta: { requiresAuth: true },
       redirect: "/panel",
       children: [
@@ -35,6 +35,11 @@ const router = createRouter({
           name: "SensorDetail",
           component: SensorDetailView,
           props: true,
+        },
+        {
+          path: "groups",
+          name: "SensorGroups",
+          component: SensorGroupsView,
         },
         {
           path: "alerts",
