@@ -121,7 +121,14 @@ onMounted(loadData);
 
 async function handleSaveGroup(group: SensorGroup) {
   const token = localStorage.getItem("authToken");
-  if (!token) return;
+  if (!token) {
+    error.value = "Nie jesteś zalogowany. Przekierowywanie...";
+    isLoading.value = false;
+    setTimeout(() => router.push("/login"), 2000);
+    return;
+  }
+
+  console.log(token);
 
   try {
     const url = group.id
