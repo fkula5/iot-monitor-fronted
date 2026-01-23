@@ -119,7 +119,11 @@ async function loadData() {
 
 onMounted(loadData);
 
-async function handleSaveGroup(group: SensorGroup) {
+async function handleSaveGroup(
+  group: Omit<SensorGroup, "created_at" | "updated_at" | "id"> & {
+    id?: number;
+  },
+) {
   const token = localStorage.getItem("authToken");
   if (!token) {
     error.value = "Nie jesteś zalogowany. Przekierowywanie...";
@@ -170,7 +174,7 @@ async function handleDeleteGroup(groupId: number) {
       {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -200,7 +204,7 @@ const filteredGroups = computed(() => {
   return groups.value.filter(
     (group) =>
       group.name.toLowerCase().includes(term) ||
-      group.description?.toLowerCase().includes(term)
+      group.description?.toLowerCase().includes(term),
   );
 });
 
@@ -208,7 +212,7 @@ const stats = computed(() => ({
   total: groups.value.length,
   totalSensors: groups.value.reduce(
     (sum, g) => sum + (g.sensor_ids?.length || 0),
-    0
+    0,
   ),
 }));
 
