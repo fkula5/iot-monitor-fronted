@@ -1,4 +1,17 @@
 <script setup lang="ts">
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { toTypedSchema } from "@vee-validate/zod";
+import * as z from "zod";
+import { useForm } from "vee-validate";
+import {
+  api,
+  config,
+  ApiError,
+  type RegisterRequest,
+  type AuthResponse,
+} from "@/lib/api";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,13 +28,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Checkbox } from "./ui/checkbox";
-import { Label } from "./ui/label";
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { toTypedSchema } from "@vee-validate/zod";
-import * as z from "zod";
-import { useForm } from "vee-validate";
+import { Loader2, AlertCircle } from "lucide-vue-next";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const serverErr = ref<string | null>(null);
 const router = useRouter();
@@ -29,22 +37,16 @@ const router = useRouter();
 const formSchema = toTypedSchema(
   z
     .object({
-      firstName: z
-        .string()
-        .min(2, { message: "Imię musi mieć co najmniej 2 znaki." }),
-      lastName: z
-        .string()
-        .min(2, { message: "Nazwisko musi mieć co najmniej 2 znaki." }),
-      email: z.string().email({ message: "Nieprawidłowy adres email." }),
-      password: z
-        .string()
-        .min(8, { message: "Hasło musi mieć co najmniej 8 znaków." }),
+      firstName: z.string().min(2, "Imię musi mieć co najmniej 2 znaki."),
+      lastName: z.string().min(2, "Nazwisko musi mieć co najmniej 2 znaki."),
+      email: z.string().email("Nieprawidłowy adres email."),
+      password: z.string().min(8, "Hasło musi mieć co najmniej 8 znaków."),
       confirmPassword: z.string(),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: "Hasła nie są zgodne.",
       path: ["confirmPassword"],
-    })
+    }),
 );
 
 const { handleSubmit, isSubmitting } = useForm({
@@ -55,25 +57,18 @@ const onSubmit = handleSubmit(async (values) => {
   serverErr.value = null;
 
   try {
-    const response = await fetch("http://localhost:8080/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: values.email,
-        username: values.email,
-        password: values.password,
-        first_name: values.firstName,
-        last_name: values.lastName,
-      }),
-    });
+    const registerData: RegisterRequest = {
+      email: values.email,
+      username: values.email,
+      password: values.password,
+      first_name: values.firstName,
+      last_name: values.lastName,
+    };
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Błąd rejestracji. Spróbuj ponownie.");
-    }
+    const data = await api.post<AuthResponse>(
+      config.endpoints.register,
+      registerData,
+    );
 
     console.log("Rejestracja udana:", data);
 
@@ -81,30 +76,52 @@ const onSubmit = handleSubmit(async (values) => {
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       router.push("/panel");
+    } else {
+      router.push("/login");
     }
   } catch (err: any) {
     console.error("Błąd podczas rejestracji:", err);
-    serverErr.value = err.message || "Wystąpił nieoczekiwany błąd.";
+
+    if (err instanceof ApiError) {
+      if (err.status === 409) {
+        serverErr.value = "Użytkownik o takim adresie email już istnieje.";
+      } else {
+        serverErr.value = err.message || "Błąd rejestracji. Spróbuj ponownie.";
+      }
+    } else {
+      serverErr.value = "Nie można połączyć się z serwerem.";
+    }
   }
 });
 </script>
 
 <template>
-  <Card class="w-full max-w-sm">
+  <Card class="w-full max-w-md shadow-lg">
     <CardHeader class="space-y-3 text-center">
-      <CardTitle class="text-2xl">Create account</CardTitle>
+      <CardTitle class="text-2xl font-bold">Utwórz konto</CardTitle>
       <CardDescription>
-        Get started with sensor management today
+        Zacznij zarządzać swoimi sensorami już teraz
       </CardDescription>
     </CardHeader>
+
     <CardContent>
       <form class="space-y-4" @submit="onSubmit">
-        <div class="space-y-2">
+        <Alert v-if="serverErr" variant="destructive" class="mb-4">
+          <AlertCircle class="h-4 w-4" />
+          <AlertDescription>{{ serverErr }}</AlertDescription>
+        </Alert>
+
+        <div class="grid grid-cols-2 gap-4">
           <FormField v-slot="{ componentField }" name="firstName">
             <FormItem class="space-y-2">
-              <FormLabel>First name</FormLabel>
+              <FormLabel>Imię</FormLabel>
               <FormControl>
-                <Input type="text" placeholder="John" v-bind="componentField" />
+                <Input
+                  type="text"
+                  placeholder="Jan"
+                  v-bind="componentField"
+                  :disabled="isSubmitting"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -112,93 +129,105 @@ const onSubmit = handleSubmit(async (values) => {
 
           <FormField v-slot="{ componentField }" name="lastName">
             <FormItem class="space-y-2">
-              <FormLabel>Last name</FormLabel>
-              <FormControl>
-                <Input type="text" placeholder="Doe" v-bind="componentField" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
-
-          <FormField v-slot="{ componentField }" name="email">
-            <FormItem class="space-y-2">
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Nazwisko</FormLabel>
               <FormControl>
                 <Input
-                  type="email"
-                  placeholder="m@example.com"
+                  type="text"
+                  placeholder="Kowalski"
                   v-bind="componentField"
+                  :disabled="isSubmitting"
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           </FormField>
-
-          <FormField v-slot="{ componentField }" name="password">
-            <FormItem class="space-y-2">
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="********"
-                  v-bind="componentField"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
-
-          <FormField v-slot="{ componentField }" name="confirmPassword">
-            <FormItem class="space-y-2">
-              <FormLabel>Confirm Password</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="********"
-                  v-bind="componentField"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
-
-          <div class="flex items-start space-x-2">
-            <Checkbox id="terms" />
-            <Label
-              for="terms"
-              class="text-sm text-gray-600 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              I agree to the
-              <button type="button" class="text-primary hover:underline">
-                terms and conditions
-              </button>
-            </Label>
-          </div>
         </div>
 
-        <p v-if="serverErr" class="text-sm font-medium text-destructive">
-          {{ serverErr }}
-        </p>
+        <FormField v-slot="{ componentField }" name="email">
+          <FormItem class="space-y-2">
+            <FormLabel>Email</FormLabel>
+            <FormControl>
+              <Input
+                type="email"
+                placeholder="jan@example.com"
+                v-bind="componentField"
+                :disabled="isSubmitting"
+                autocomplete="email"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        </FormField>
+
+        <FormField v-slot="{ componentField }" name="password">
+          <FormItem class="space-y-2">
+            <FormLabel>Hasło</FormLabel>
+            <FormControl>
+              <Input
+                type="password"
+                placeholder="********"
+                v-bind="componentField"
+                :disabled="isSubmitting"
+                autocomplete="new-password"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        </FormField>
+
+        <FormField v-slot="{ componentField }" name="confirmPassword">
+          <FormItem class="space-y-2">
+            <FormLabel>Potwierdź hasło</FormLabel>
+            <FormControl>
+              <Input
+                type="password"
+                placeholder="********"
+                v-bind="componentField"
+                :disabled="isSubmitting"
+                autocomplete="new-password"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        </FormField>
 
         <Button type="submit" class="w-full" :disabled="isSubmitting">
-          {{ isSubmitting ? "Creating account..." : "Create account" }}
+          <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
+          {{ isSubmitting ? "Tworzenie konta..." : "Zarejestruj się" }}
         </Button>
       </form>
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
+
+      <div class="relative my-6">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-300"></div>
         </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-card text-gray-500">
-            Already have an account?
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-card text-muted-foreground">
+            Masz już konto?
           </span>
         </div>
       </div>
+
       <RouterLink to="/login">
-        <Button type="button" variant="outline" class="w-full text-black">
-          Sign in
+        <Button
+          type="button"
+          variant="outline"
+          class="w-full"
+          :disabled="isSubmitting"
+        >
+          Zaloguj się
         </Button>
       </RouterLink>
     </CardContent>
   </Card>
 </template>
+
+<style scoped>
+.card {
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+</style>

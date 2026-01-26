@@ -22,7 +22,13 @@ import {
 } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-vue-next";
-import { api, type LoginRequest, type AuthResponse, ApiError } from "@/lib/api";
+import {
+  api,
+  config,
+  type LoginRequest,
+  type AuthResponse,
+  ApiError,
+} from "@/lib/api";
 
 const router = useRouter();
 const serverErr = ref<string | null>(null);
@@ -38,7 +44,7 @@ const formSchema = toTypedSchema(
       .string()
       .min(1, "Hasło jest wymagane")
       .min(6, "Hasło musi mieć min. 6 znaków"),
-  })
+  }),
 );
 
 const { handleSubmit, isSubmitting } = useForm({
@@ -58,7 +64,10 @@ const onSubmit = handleSubmit(async (values) => {
       password: values.password,
     };
 
-    const response = await api.post<AuthResponse>("/auth/login", loginData);
+    const response = await api.post<AuthResponse>(
+      config.endpoints.login,
+      loginData,
+    );
 
     if (response.token) {
       localStorage.setItem("authToken", response.token);
