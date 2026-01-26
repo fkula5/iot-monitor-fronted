@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
-import { api, config, ApiError } from "@/lib/api";
+import { api, config, ApiError, type Sensor } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Activity } from "lucide-vue-next";
@@ -17,26 +17,6 @@ import AddSensor from "@/components/AddSensor.vue";
 import type { NewSensor } from "@/components/AddSensor.vue";
 
 const router = useRouter();
-
-interface SensorType {
-  id: number;
-  name: string;
-  unit: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Sensor {
-  id: number;
-  name: string;
-  location: string | null;
-  description: string | null;
-  active: boolean;
-  sensor_type_id: number;
-  sensor_type: SensorType;
-  created_at: string;
-  updated_at: string;
-}
 
 const sensors = ref<Sensor[]>([]);
 const isLoading = ref(true);

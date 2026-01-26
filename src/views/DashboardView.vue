@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
-import { api, config, ApiError } from "@/lib/api";
+import { api, config, ApiError, type Sensor } from "@/lib/api";
 import {
   Card,
   CardContent,
@@ -26,14 +26,6 @@ import LoadingSkeleton from "@/components/shared/LoadingSkeleton.vue";
 import EmptyState from "@/components/shared/EmptyState.vue";
 
 const router = useRouter();
-
-interface Sensor {
-  id: number;
-  name: string;
-  location: string | null;
-  active: boolean;
-  sensor_type_id: number;
-}
 
 const sensors = ref<Sensor[]>([]);
 const isLoading = ref(true);

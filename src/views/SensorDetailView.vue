@@ -180,7 +180,7 @@ async function fetchSensor(): Promise<void> {
       `http://localhost:8080/api/sensors/${sensorId.value}`,
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
 
     if (response.status === 401) {
@@ -218,7 +218,7 @@ async function fetchHistory(): Promise<void> {
       {
         method: "GET",
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -323,10 +323,10 @@ function connectWebSocket(): void {
         reconnectAttempts.value++;
         const delay = Math.min(
           1000 * Math.pow(2, reconnectAttempts.value),
-          30000
+          30000,
         );
         console.log(
-          `Reconnecting in ${delay}ms (attempt ${reconnectAttempts.value}/${MAX_RECONNECT_ATTEMPTS})`
+          `Reconnecting in ${delay}ms (attempt ${reconnectAttempts.value}/${MAX_RECONNECT_ATTEMPTS})`,
         );
 
         setTimeout(() => {
@@ -406,8 +406,8 @@ onUnmounted(() => {
             connectionStatus === 'connected'
               ? 'default'
               : connectionStatus === 'error'
-              ? 'destructive'
-              : 'secondary'
+                ? 'destructive'
+                : 'secondary'
           "
         >
           <component
@@ -421,8 +421,8 @@ onUnmounted(() => {
             connectionStatus === "connected"
               ? "Połączono"
               : connectionStatus === "error"
-              ? "Błąd"
-              : "Rozłączono"
+                ? "Błąd"
+                : "Rozłączono"
           }}
         </Badge>
 

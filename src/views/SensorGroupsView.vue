@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
+import { api, config, type Sensor, type SensorGroup } from "@/lib/api";
 import { useRouter } from "vue-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,29 +28,6 @@ import SensorGroupDialog from "@/components/SensorGroupDialog.vue";
 
 const router = useRouter();
 
-interface SensorType {
-  name: string;
-}
-
-interface Sensor {
-  id: number;
-  name: string;
-  location: string | null;
-  active: boolean;
-  sensor_type: SensorType;
-}
-
-interface SensorGroup {
-  id: number;
-  name: string;
-  description: string;
-  color: string;
-  icon: string;
-  sensor_ids: number[];
-  created_at: string;
-  updated_at: string;
-}
-
 const groups = ref<SensorGroup[]>([]);
 const sensors = ref<Sensor[]>([]);
 const isLoading = ref(true);
@@ -59,49 +37,16 @@ const isDialogOpen = ref(false);
 const editingGroup = ref<SensorGroup | null>(null);
 
 async function fetchGroups() {
-  const token = localStorage.getItem("authToken");
-  if (!token) {
-    error.value = "Nie jesteś zalogowany";
-    router.push("/login");
-    return;
-  }
-
   try {
-    const response = await fetch("http://localhost:8080/api/sensor-groups", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (response.status === 401) {
-      localStorage.removeItem("authToken");
-      router.push("/login");
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error(`Błąd: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    const data = await api.get<SensorGroup[]>(config.endpoints.sensorGroups);
     groups.value = data || [];
   } catch (err: any) {
     error.value = err.message;
   }
 }
-
 async function fetchSensors() {
-  const token = localStorage.getItem("authToken");
-  if (!token) return;
-
   try {
-    const response = await fetch("http://localhost:8080/api/sensors", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Błąd: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    const data = await api.get<Sensor[]>(config.endpoints.sensors);
     sensors.value = data || [];
   } catch (err: any) {
     console.error("Błąd pobierania sensorów:", err);
@@ -119,44 +64,15 @@ async function loadData() {
 
 onMounted(loadData);
 
-async function handleSaveGroup(
-  group: Omit<SensorGroup, "created_at" | "updated_at" | "id"> & {
-    id?: number;
-  },
-) {
-  const token = localStorage.getItem("authToken");
-  if (!token) {
-    error.value = "Nie jesteś zalogowany. Przekierowywanie...";
-    isLoading.value = false;
-    setTimeout(() => router.push("/login"), 2000);
-    return;
-  }
-
-  console.log(token);
-
+async function handleSaveGroup(group: any) {
   try {
-    const url = group.id
-      ? `http://localhost:8080/api/sensor-groups/${group.id}`
-      : "http://localhost:8080/api/sensor-groups";
-
-    const method = group.id ? "PUT" : "POST";
-
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(group),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Błąd: ${response.statusText}`);
+    if (group.id) {
+      await api.put(config.endpoints.sensorGroup(group.id), group);
+    } else {
+      await api.post(config.endpoints.sensorGroups, group);
     }
-
     await fetchGroups();
     isDialogOpen.value = false;
-    editingGroup.value = null;
   } catch (err: any) {
     error.value = err.message;
   }
@@ -164,23 +80,8 @@ async function handleSaveGroup(
 
 async function handleDeleteGroup(groupId: number) {
   if (!confirm("Czy na pewno chcesz usunąć tę grupę?")) return;
-
-  const token = localStorage.getItem("authToken");
-  if (!token) return;
-
   try {
-    const response = await fetch(
-      `http://localhost:8080/api/sensor-groups/${groupId}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`Błąd: ${response.statusText}`);
-    }
-
+    await api.delete(config.endpoints.sensorGroup(groupId));
     await fetchGroups();
   } catch (err: any) {
     error.value = err.message;

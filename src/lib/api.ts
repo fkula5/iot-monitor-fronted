@@ -11,12 +11,64 @@ export const config = {
     sensors: "/api/sensors",
     sensor: (id: number) => `/api/sensors/${id}`,
     sensorTypes: "/api/sensor-types",
+    sensorGroups: "/api/sensor-groups",
+    sensorGroup: (id: number) => `/api/sensor-groups/${id}`,
 
     sensorLatest: (id: number) => `/api/data/sensors/${id}/latest`,
     wsReadings: (sensorIds: number[]) =>
       `/api/data/ws/readings?sensor_ids=${sensorIds.join(",")}`,
   },
 } as const;
+
+export interface SensorType {
+  id: number;
+  name: string;
+  unit: string;
+  min_value: number;
+  max_value: number;
+  model?: string;
+  manufacturer?: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Sensor {
+  id: number;
+  name: string;
+  location: string | null;
+  description: string | null;
+  active: boolean;
+  sensor_type_id: number;
+  sensor_type: SensorType;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SensorGroup {
+  id: number;
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+  sensor_ids: number[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Reading {
+  timestamp: Date;
+  value: number;
+}
+
+export interface ReadingUpdate {
+  sensor_id: number;
+  value: number;
+  timestamp: string;
+  sensor_name: string;
+  location: string;
+  unit: string;
+}
 
 export function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem("authToken");
@@ -27,7 +79,11 @@ export function getAuthHeaders(): HeadersInit {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public data?: any) {
+  constructor(
+    public status: number,
+    message: string,
+    public data?: any,
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -44,7 +100,7 @@ export const api = {
     if (!response.ok) {
       throw new ApiError(
         response.status,
-        `GET ${endpoint} failed: ${response.statusText}`
+        `GET ${endpoint} failed: ${response.statusText}`,
       );
     }
 
@@ -54,7 +110,7 @@ export const api = {
   async post<T>(
     endpoint: string,
     body?: any,
-    options?: RequestInit
+    options?: RequestInit,
   ): Promise<T> {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "POST",
@@ -68,7 +124,7 @@ export const api = {
       throw new ApiError(
         response.status,
         error.message || `POST ${endpoint} failed: ${response.statusText}`,
-        error
+        error,
       );
     }
 
@@ -78,7 +134,7 @@ export const api = {
   async put<T>(
     endpoint: string,
     body?: any,
-    options?: RequestInit
+    options?: RequestInit,
   ): Promise<T> {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "PUT",
@@ -90,7 +146,7 @@ export const api = {
     if (!response.ok) {
       throw new ApiError(
         response.status,
-        `PUT ${endpoint} failed: ${response.statusText}`
+        `PUT ${endpoint} failed: ${response.statusText}`,
       );
     }
 
@@ -107,7 +163,7 @@ export const api = {
     if (!response.ok) {
       throw new ApiError(
         response.status,
-        `DELETE ${endpoint} failed: ${response.statusText}`
+        `DELETE ${endpoint} failed: ${response.statusText}`,
       );
     }
 
@@ -125,8 +181,8 @@ export class WebSocketClient {
     private endpoint: string,
     private onMessage: (data: any) => void,
     private onStatusChange: (
-      status: "connected" | "disconnected" | "error"
-    ) => void
+      status: "connected" | "disconnected" | "error",
+    ) => void,
   ) {}
 
   connect() {
@@ -171,11 +227,11 @@ export class WebSocketClient {
     this.reconnectAttempts++;
     const delay = Math.min(
       this.reconnectDelay * Math.pow(2, this.reconnectAttempts),
-      30000
+      30000,
     );
 
     console.log(
-      `Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+      `Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`,
     );
 
     setTimeout(() => {

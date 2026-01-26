@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
+import { api, config, type SensorType } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -28,21 +29,6 @@ export interface NewSensor {
   description?: string;
 }
 
-interface SensorType {
-  created_at: {
-    seconds: number;
-    nanos: number;
-  };
-  description: string;
-  id: number;
-  manufacturer: string;
-  max_value: number;
-  min_value: number;
-  model: string;
-  name: string;
-  unit: string;
-}
-
 interface AddSensorDialogProps {
   isOpen: boolean;
 }
@@ -53,40 +39,11 @@ const sensorTypes = ref<SensorType[]>([]);
 const router = useRouter();
 
 async function fetchSensorTypes() {
-  isLoading.value = true;
-  error.value = null;
-  const token = localStorage.getItem("authToken");
-
-  if (!token) {
-    error.value = "Nie jesteś zalogowany. Przekierowywanie...";
-    isLoading.value = false;
-    setTimeout(() => router.push("/login"), 2000);
-    return;
-  }
-
   try {
-    const response = await fetch("http://localhost:8080/api/sensor-types", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (response.status === 401) {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-      error.value = "Sesja wygasła. Proszę zalogować się ponownie.";
-      setTimeout(() => router.push("/login"), 2000);
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error(`Błąd pobierania typów sensorów: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    isLoading.value = true;
+    const data = await api.get<SensorType[]>(config.endpoints.sensorTypes);
     sensorTypes.value = data || [];
   } catch (err: any) {
-    console.error("Błąd podczas pobierania typów sensorów:", err);
     error.value = err.message || "Nie udało się pobrać typów sensorów.";
   } finally {
     isLoading.value = false;
