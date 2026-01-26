@@ -80,14 +80,14 @@ async function fetchSensorTypes() {
     }
 
     if (!response.ok) {
-      throw new Error(`Błąd pobierania sensorów: ${response.statusText}`);
+      throw new Error(`Błąd pobierania typów sensorów: ${response.statusText}`);
     }
 
     const data = await response.json();
     sensorTypes.value = data || [];
   } catch (err: any) {
-    console.error("Błąd podczas pobierania sensorów:", err);
-    error.value = err.message || "Nie udało się pobrać danych sensorów.";
+    console.error("Błąd podczas pobierania typów sensorów:", err);
+    error.value = err.message || "Nie udało się pobrać typów sensorów.";
   } finally {
     isLoading.value = false;
   }
@@ -121,7 +121,7 @@ const handleSubmit = () => {
     !formData.value.type ||
     !formData.value.location
   ) {
-    alert("Please fill in all required fields.");
+    alert("Proszę wypełnić wszystkie wymagane pola.");
     return;
   }
 
@@ -141,7 +141,7 @@ watch(
     if (!newVal) {
       setTimeout(resetForm, 300);
     }
-  }
+  },
 );
 
 const onOpenChange = (open: boolean) => {
@@ -155,56 +155,57 @@ onMounted(fetchSensorTypes);
   <Dialog :open="isOpen" @update:open="onOpenChange">
     <DialogContent class="sm:max-w-[500px]">
       <DialogHeader>
-        <DialogTitle>Add New Sensor</DialogTitle>
+        <DialogTitle>Dodaj Nowy Sensor</DialogTitle>
         <DialogDescription>
-          Fill in the details to add a new sensor to your network
+          Wypełnij dane, aby dodać nowy sensor do sieci
         </DialogDescription>
       </DialogHeader>
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div class="col-span-2 space-y-2">
-            <Label htmlFor="name">Sensor Name *</Label>
+            <Label htmlFor="name">Nazwa Sensora *</Label>
             <Input
               id="name"
               v-model="formData.name"
-              placeholder="e.g., Temperature Sensor A1"
+              placeholder="np. Sensor Temperatury A1"
               required
             />
           </div>
 
           <div class="space-y-2">
-            <Label htmlFor="type">Sensor Type *</Label>
+            <Label htmlFor="type">Typ Sensora *</Label>
             <Select v-model="formData.type" required>
               <SelectTrigger id="type">
-                <SelectValue placeholder="Select type" />
+                <SelectValue placeholder="Wybierz typ" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem
                   v-for="type in sensorTypes"
                   :key="type.id"
                   :value="type.id"
-                  >{{ type.name }}</SelectItem
                 >
+                  {{ type.name }}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div class="space-y-2">
-            <Label htmlFor="location">Location *</Label>
+            <Label htmlFor="location">Lokalizacja *</Label>
             <Input
               id="location"
               v-model="formData.location"
-              placeholder="e.g., Server Room"
+              placeholder="np. Serwerownia"
               required
             />
           </div>
 
           <div class="col-span-2 space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Opis</Label>
             <Textarea
               id="description"
               v-model="formData.description"
-              placeholder="Optional description of the sensor's purpose"
+              placeholder="Opcjonalny opis przeznaczenia sensora"
               :rows="3"
             />
           </div>
@@ -212,9 +213,9 @@ onMounted(fetchSensorTypes);
 
         <div class="flex justify-end space-x-2 pt-4">
           <DialogClose as-child>
-            <Button type="button" variant="outline"> Cancel </Button>
+            <Button type="button" variant="outline">Anuluj</Button>
           </DialogClose>
-          <Button type="submit"> Add Sensor </Button>
+          <Button type="submit">Dodaj Sensor</Button>
         </div>
       </form>
     </DialogContent>

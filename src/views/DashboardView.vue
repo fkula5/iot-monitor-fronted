@@ -19,6 +19,11 @@ import {
   XCircle,
 } from "lucide-vue-next";
 
+import PageHeader from "@/components/shared/PageHeader.vue";
+import StatCard from "@/components/shared/StatCard.vue";
+import LoadingSkeleton from "@/components/shared/LoadingSkeleton.vue";
+import EmptyState from "@/components/shared/EmptyState.vue";
+
 const router = useRouter();
 
 interface Sensor {
@@ -105,24 +110,22 @@ function navigateToSensors() {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold tracking-tight text-gray-900">
-          Panel Główny
-        </h1>
-        <p class="text-gray-600 mt-2">Przegląd systemu monitorowania IoT</p>
-      </div>
-      <Button
-        @click="fetchSensors"
-        variant="outline"
-        size="default"
-        :disabled="isLoading"
-        class="gap-2"
-      >
-        <RefreshCw :class="['h-4 w-4', isLoading ? 'animate-spin' : '']" />
-        Odśwież
-      </Button>
-    </div>
+    <PageHeader
+      title="Panel Główny"
+      description="Przegląd systemu monitorowania IoT"
+    >
+      <template #actions>
+        <Button
+          @click="fetchSensors"
+          variant="outline"
+          :disabled="isLoading"
+          class="gap-2"
+        >
+          <RefreshCw :class="['h-4 w-4', isLoading && 'animate-spin']" />
+          Odśwież
+        </Button>
+      </template>
+    </PageHeader>
 
     <Alert v-if="error" variant="destructive">
       <AlertCircle class="h-4 w-4" />
@@ -130,92 +133,39 @@ function navigateToSensors() {
       <AlertDescription>{{ error }}</AlertDescription>
     </Alert>
 
-    <div
-      v-if="isLoading && !error"
-      class="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
-    >
-      <Card v-for="i in 4" :key="i" class="animate-pulse">
-        <CardHeader class="pb-3">
-          <div class="h-4 bg-gray-200 rounded w-24"></div>
-        </CardHeader>
-        <CardContent>
-          <div class="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-          <div class="h-3 bg-gray-100 rounded w-32"></div>
-        </CardContent>
-      </Card>
-    </div>
+    <LoadingSkeleton v-if="isLoading && !error" type="stats" />
 
     <div v-else-if="!error" class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <Card class="hover:shadow-md transition-shadow">
-        <CardHeader class="flex flex-row items-center justify-between pb-2">
-          <CardTitle class="text-sm font-medium text-gray-600">
-            Wszystkie Sensory
-          </CardTitle>
-          <div class="p-2 bg-blue-50 rounded-lg">
-            <Activity class="h-5 w-5 text-blue-600" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div class="text-3xl font-bold text-gray-900">{{ stats.total }}</div>
-          <p class="text-xs text-gray-500 mt-1">Łączna liczba sensorów</p>
-        </CardContent>
-      </Card>
-
-      <Card class="hover:shadow-md transition-shadow">
-        <CardHeader class="flex flex-row items-center justify-between pb-2">
-          <CardTitle class="text-sm font-medium text-gray-600">
-            Aktywne
-          </CardTitle>
-          <div class="p-2 bg-green-50 rounded-lg">
-            <CheckCircle class="h-5 w-5 text-green-600" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div class="text-3xl font-bold text-green-600">
-            {{ stats.active }}
-          </div>
-          <p class="text-xs text-gray-500 mt-1">
-            <span class="text-green-600 font-medium">
-              {{ stats.activePercentage }}%
-            </span>
-            statusu aktywnego
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card class="hover:shadow-md transition-shadow">
-        <CardHeader class="flex flex-row items-center justify-between pb-2">
-          <CardTitle class="text-sm font-medium text-gray-600">
-            Nieaktywne
-          </CardTitle>
-          <div class="p-2 bg-red-50 rounded-lg">
-            <XCircle class="h-5 w-5 text-red-600" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div class="text-3xl font-bold text-red-600">
-            {{ stats.inactive }}
-          </div>
-          <p class="text-xs text-gray-500 mt-1">Wymagają uwagi</p>
-        </CardContent>
-      </Card>
-
-      <Card class="hover:shadow-md transition-shadow">
-        <CardHeader class="flex flex-row items-center justify-between pb-2">
-          <CardTitle class="text-sm font-medium text-gray-600">
-            Typy Urządzeń
-          </CardTitle>
-          <div class="p-2 bg-purple-50 rounded-lg">
-            <AlertTriangle class="h-5 w-5 text-purple-600" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div class="text-3xl font-bold text-gray-900">
-            {{ sensorsByType.size }}
-          </div>
-          <p class="text-xs text-gray-500 mt-1">Różnych kategorii</p>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="Wszystkie Sensory"
+        :value="stats.total"
+        description="Łączna liczba sensorów"
+        :icon="Activity"
+        icon-color="bg-blue-50 text-blue-600"
+      />
+      <StatCard
+        title="Aktywne"
+        :value="stats.active"
+        :description="`${stats.activePercentage}% statusu aktywnego`"
+        :icon="CheckCircle"
+        icon-color="bg-green-50 text-green-600"
+        value-color="text-green-600"
+      />
+      <StatCard
+        title="Nieaktywne"
+        :value="stats.inactive"
+        description="Wymagają uwagi"
+        :icon="XCircle"
+        icon-color="bg-red-50 text-red-600"
+        value-color="text-red-600"
+      />
+      <StatCard
+        title="Typy Urządzeń"
+        :value="sensorsByType.size"
+        description="Różnych kategorii"
+        :icon="AlertTriangle"
+        icon-color="bg-purple-50 text-purple-600"
+      />
     </div>
 
     <div v-if="!error && !isLoading" class="grid gap-6 md:grid-cols-2">
@@ -265,7 +215,7 @@ function navigateToSensors() {
       <Card>
         <CardHeader>
           <CardTitle class="text-gray-900">Szybkie Akcje</CardTitle>
-          <CardDescription> Często używane funkcje systemu </CardDescription>
+          <CardDescription>Często używane funkcje systemu</CardDescription>
         </CardHeader>
         <CardContent class="space-y-3">
           <Button
@@ -296,35 +246,19 @@ function navigateToSensors() {
       </Card>
     </div>
 
-    <Card
+    <EmptyState
       v-if="!error && !isLoading && sensors.length === 0"
-      class="text-center"
+      :icon="Activity"
+      title="Witaj w systemie IoT Monitor!"
+      description="Rozpocznij konfigurację swojego systemu monitorowania"
+      :show-card="true"
     >
-      <CardHeader>
-        <CardTitle class="text-gray-900"
-          >Witaj w systemie IoT Monitor!</CardTitle
-        >
-        <CardDescription>
-          Rozpocznij konfigurację swojego systemu monitorowania
-        </CardDescription>
-      </CardHeader>
-      <CardContent class="space-y-4 py-8">
-        <div
-          class="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center"
-        >
-          <Activity class="h-8 w-8 text-blue-600" />
+      <template #default>
+        <div class="flex gap-3 justify-center mt-4">
+          <Button @click="navigateToSensors">Przejdź do Sensorów</Button>
+          <Button variant="outline" @click="fetchSensors">Odśwież Listę</Button>
         </div>
-        <p class="text-sm text-gray-600 max-w-md mx-auto">
-          Nie masz jeszcze żadnych sensorów. Skontaktuj się z administratorem,
-          aby dodać pierwsze urządzenia do monitorowania.
-        </p>
-        <div class="flex gap-3 justify-center">
-          <Button @click="navigateToSensors"> Przejdź do Sensorów </Button>
-          <Button variant="outline" @click="fetchSensors">
-            Odśwież Listę
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      </template>
+    </EmptyState>
   </div>
 </template>
