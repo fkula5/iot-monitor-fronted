@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
+import { api, config, ApiError } from "@/lib/api";
 import {
   Card,
   CardContent,
@@ -63,39 +64,21 @@ const sensorsByType = computed(() => {
 async function fetchSensors() {
   isLoading.value = true;
   error.value = null;
-  const token = localStorage.getItem("authToken");
-
-  if (!token) {
-    error.value = "Nie jesteś zalogowany.";
-    isLoading.value = false;
-    setTimeout(() => router.push("/login"), 2000);
-    return;
-  }
 
   try {
-    const response = await fetch("http://localhost:8080/api/sensors", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const data = await api.get<Sensor[]>(config.endpoints.sensors);
+    sensors.value = data || [];
+  } catch (err: any) {
+    console.error("Błąd pobierania danych:", err);
 
-    if (response.status === 401) {
+    if (err instanceof ApiError && err.status === 401) {
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
       error.value = "Sesja wygasła. Proszę zalogować się ponownie.";
       setTimeout(() => router.push("/login"), 2000);
-      return;
+    } else {
+      error.value = err.message || "Nie udało się pobrać danych.";
     }
-
-    if (!response.ok) {
-      throw new Error(`Błąd pobierania sensorów: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    sensors.value = data || [];
-  } catch (err: any) {
-    console.error("Błąd:", err);
-    error.value = err.message || "Nie udało się pobrać danych.";
   } finally {
     isLoading.value = false;
   }

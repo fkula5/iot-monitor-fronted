@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
+import { api, config, ApiError } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Activity } from "lucide-vue-next";
@@ -46,39 +47,34 @@ const isAddSensorDialogOpen = ref(false);
 async function fetchSensors() {
   isLoading.value = true;
   error.value = null;
-  const token = localStorage.getItem("authToken");
-
-  if (!token) {
-    error.value = "Nie jesteś zalogowany. Przekierowywanie...";
-    isLoading.value = false;
-    setTimeout(() => router.push("/login"), 2000);
-    return;
-  }
 
   try {
-    const response = await fetch("http://localhost:8080/api/sensors", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (response.status === 401) {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-      error.value = "Sesja wygasła. Proszę zalogować się ponownie.";
-      setTimeout(() => router.push("/login"), 2000);
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error(`Błąd pobierania sensorów: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    const data = await api.get<Sensor[]>(config.endpoints.sensors);
     sensors.value = data || [];
   } catch (err: any) {
-    console.error("Błąd podczas pobierania sensorów:", err);
-    error.value = err.message || "Nie udało się pobrać danych sensorów.";
+    if (err instanceof ApiError && err.status === 401) {
+      localStorage.removeItem("authToken");
+      router.push("/login");
+    } else {
+      error.value = err.message || "Nie udało się pobrać danych sensorów.";
+    }
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+async function handleAddSensor(newSensor: NewSensor) {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    await api.post(config.endpoints.sensors, newSensor);
+
+    isAddSensorDialogOpen.value = false;
+    await fetchSensors();
+  } catch (err: any) {
+    console.error("Błąd dodawania sensora:", err);
+    error.value = err.message || "Nie udało się dodać sensora.";
   } finally {
     isLoading.value = false;
   }
@@ -97,51 +93,6 @@ const filteredSensors = computed(() => {
       sensor.sensor_type.name.toLowerCase().includes(query),
   );
 });
-
-async function handleAddSensor(newSensor: NewSensor) {
-  isLoading.value = true;
-  error.value = null;
-  const token = localStorage.getItem("authToken");
-
-  if (!token) {
-    error.value = "Nie jesteś zalogowany. Przekierowywanie...";
-    isLoading.value = false;
-    setTimeout(() => router.push("/login"), 2000);
-    return;
-  }
-
-  try {
-    const response = await fetch("http://localhost:8080/api/sensors", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(newSensor),
-    });
-
-    if (response.status === 401) {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-      error.value = "Sesja wygasła. Proszę zalogować się ponownie.";
-      isLoading.value = false;
-      setTimeout(() => router.push("/login"), 2000);
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error(`Błąd dodawania sensoru: ${response.statusText}`);
-    }
-
-    isAddSensorDialogOpen.value = false;
-    error.value = null;
-  } catch (err: any) {
-    error.value = err.message || "Nie udało się dodać sensora.";
-  } finally {
-    isLoading.value = false;
-    await fetchSensors();
-  }
-}
 
 const stats = computed(() => ({
   total: sensors.value.length,
