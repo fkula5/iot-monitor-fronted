@@ -85,14 +85,14 @@ function formatDate(dateString: string): string {
             <div
               :class="[
                 'p-2 rounded-lg',
-                sensor.active ? 'bg-green-50' : 'bg-gray-50',
+                sensor.active ? 'bg-green-50' : 'bg-red-50',
               ]"
             >
               <component
                 :is="sensor.active ? CheckCircle : XCircle"
                 :class="[
                   'h-5 w-5',
-                  sensor.active ? 'text-green-600' : 'text-gray-400',
+                  sensor.active ? 'text-green-600' : 'text-red-400',
                 ]"
               />
             </div>
@@ -116,7 +116,7 @@ function formatDate(dateString: string): string {
             :class="[
               sensor.active
                 ? 'bg-green-100 text-green-700 hover:bg-green-100'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-100',
+                : 'bg-red-100 text-red-700 hover:bg-red-100',
             ]"
           >
             {{ sensor.active ? "Aktywny" : "Nieaktywny" }}

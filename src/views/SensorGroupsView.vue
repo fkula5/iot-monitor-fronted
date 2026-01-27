@@ -25,6 +25,7 @@ import {
   Eye,
 } from "lucide-vue-next";
 import SensorGroupDialog from "@/components/SensorGroupDialog.vue";
+import PageHeader from "@/components/shared/PageHeader.vue";
 
 const router = useRouter();
 
@@ -133,14 +134,10 @@ function formatDate(dateString: string) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold tracking-tight text-gray-900">
-          Grupy Sensorów
-        </h1>
-        <p class="text-gray-600 mt-2">Organizuj sensory w logiczne grupy</p>
-      </div>
-    </div>
+    <PageHeader
+      title="Grupy sensorów"
+      description="Organizuj sensory w logiczne grupy"
+    />
 
     <div class="grid gap-4 md:grid-cols-2">
       <Card>
