@@ -499,53 +499,80 @@ onUnmounted(() => {
         </Card>
 
         <Card>
-          <CardHeader class="pb-3">
-            <CardDescription class="flex items-center gap-2">
-              <Activity class="h-4 w-4" />
-              Średnia
-            </CardDescription>
-            <CardTitle class="text-3xl">
-              {{ readingStats?.avg || "---" }}
-              <span class="text-lg text-muted-foreground ml-1">
-                {{ sensor.sensor_type.unit }}
-              </span>
-            </CardTitle>
-          </CardHeader>
+          <CardContent class="pt-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-muted-foreground">Średnia (ostatnie)</p>
+                <div class="flex items-baseline gap-2 mt-1">
+                  <p class="text-3xl font-bold">
+                    {{ readingStats?.avg || "---" }}
+                  </p>
+                  <span class="text-lg text-muted-foreground">
+                    {{ sensor.sensor_type.unit }}
+                  </span>
+                </div>
+              </div>
+              <div class="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <Activity class="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardHeader class="pb-3">
-            <CardDescription>Min / Max</CardDescription>
-            <CardTitle class="text-2xl">
-              {{ readingStats?.min || "---" }} /
-              {{ readingStats?.max || "---" }}
-              <span class="text-sm text-muted-foreground ml-1">
-                {{ sensor.sensor_type.unit }}
-              </span>
-            </CardTitle>
-          </CardHeader>
+          <CardContent class="pt-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-muted-foreground">Zakres min / max</p>
+                <div class="flex items-baseline gap-2 mt-1">
+                  <p class="text-2xl font-bold">
+                    {{ readingStats?.min || "---" }} /
+                    {{ readingStats?.max || "---" }}
+                  </p>
+                  <span class="text-sm text-muted-foreground ml-1">
+                    {{ sensor.sensor_type.unit }}
+                  </span>
+                </div>
+              </div>
+              <div class="p-3 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                <TrendingUp class="h-6 w-6 text-orange-600" />
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardHeader class="pb-3">
-            <CardDescription class="flex items-center gap-2">
-              <Clock class="h-4 w-4" />
-              Trend
-            </CardDescription>
-            <CardTitle class="text-3xl flex items-center gap-2">
-              {{ readingStats?.count || 0 }}
-              <component
-                v-if="readingStats?.trend && readingStats.trend !== 'stable'"
-                :is="readingStats.trend === 'up' ? TrendingUp : TrendingDown"
-                :class="[
-                  'h-6 w-6',
-                  readingStats.trend === 'up'
-                    ? 'text-red-600'
-                    : 'text-blue-600',
-                ]"
-              />
-            </CardTitle>
-          </CardHeader>
+          <CardContent class="pt-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-muted-foreground">Liczba odczytów</p>
+                <div class="flex items-baseline gap-2 mt-1">
+                  <p class="text-3xl font-bold">
+                    {{ readingStats?.count || 0 }}
+                  </p>
+                </div>
+                <p
+                  v-if="readingStats?.trend && readingStats.trend !== 'stable'"
+                  class="text-xs text-muted-foreground mt-1"
+                >
+                  Trend:
+                  {{ readingStats.trend === "up" ? "Rosnący" : "Malejący" }}
+                </p>
+              </div>
+              <div class="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                <component
+                  :is="
+                    readingStats?.trend === 'up'
+                      ? TrendingUp
+                      : readingStats?.trend === 'down'
+                        ? TrendingDown
+                        : Clock
+                  "
+                  class="h-6 w-6 text-purple-600"
+                />
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
 
