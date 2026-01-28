@@ -93,12 +93,14 @@ const stats = computed(() => ({
         title="Wszystkie Sensory"
         :value="stats.total"
         :icon="Activity"
+        description="Łączna liczba sensorów"
         icon-color="bg-blue-50 text-blue-600"
       />
       <StatCard
         title="Aktywne"
         :value="stats.active"
         :icon="CheckCircle"
+        description="Liczba aktywnym sensorów"
         icon-color="bg-green-50 text-green-600"
         value-color="text-green-600"
       />
@@ -106,6 +108,7 @@ const stats = computed(() => ({
         title="Typy"
         :value="stats.types"
         :icon="Activity"
+        description="Różne typy sensorów"
         icon-color="bg-purple-50 text-purple-600"
       />
     </div>

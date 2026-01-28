@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { api, config, type Sensor, type SensorGroup } from "@/lib/api";
-import { useRouter } from "vue-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,8 +25,7 @@ import {
 } from "lucide-vue-next";
 import SensorGroupDialog from "@/components/SensorGroupDialog.vue";
 import PageHeader from "@/components/shared/PageHeader.vue";
-
-const router = useRouter();
+import StatCard from "@/components/shared/StatCard.vue";
 
 const groups = ref<SensorGroup[]>([]);
 const sensors = ref<Sensor[]>([]);
@@ -140,37 +138,20 @@ function formatDate(dateString: string) {
     />
 
     <div class="grid gap-4 md:grid-cols-2">
-      <Card>
-        <CardContent class="pt-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600">Liczba Grup</p>
-              <p class="text-2xl font-bold text-gray-900 mt-1">
-                {{ stats.total }}
-              </p>
-            </div>
-            <div class="p-3 bg-blue-50 rounded-lg">
-              <Folder class="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent class="pt-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600">Sensory w Grupach</p>
-              <p class="text-2xl font-bold text-gray-900 mt-1">
-                {{ stats.totalSensors }}
-              </p>
-            </div>
-            <div class="p-3 bg-green-50 rounded-lg">
-              <Eye class="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="Liczba Grup"
+        :value="stats.total"
+        :icon="Folder"
+        description="Łączna liczba grup sensorów"
+        icon-color="bg-blue-50 text-blue-600"
+      />
+      <StatCard
+        title="Sensory w Grupach"
+        :value="stats.totalSensors"
+        :icon="Eye"
+        description="Całkowita liczba sensorów w grupach"
+        icon-color="bg-green-50 text-green-600"
+      />
     </div>
 
     <Alert v-if="error" variant="destructive">
