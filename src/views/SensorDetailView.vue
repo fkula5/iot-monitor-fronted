@@ -202,8 +202,6 @@ async function fetchHistory(): Promise<void> {
         const timestamp = parseTimestamp(item.timestamp);
         const value = parseFloat(item.value.toString());
 
-        console.log(timestamp, value);
-
         if (isNaN(timestamp.getTime()) || isNaN(value)) {
           return null;
         }
