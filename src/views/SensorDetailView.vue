@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from "vue";
+import { api, config, ApiError, type Sensor } from "@/lib/api";
 import { useRouter, useRoute } from "vue-router";
 import {
   Card,
@@ -26,27 +27,6 @@ import {
   WifiOff,
 } from "lucide-vue-next";
 import SensorDataChart from "@/components/SensorDataChart.vue";
-
-interface SensorType {
-  id: number;
-  name: string;
-  unit: string;
-  min_value: number;
-  max_value: number;
-  model?: string;
-  manufacturer?: string;
-}
-
-interface SensorData {
-  id: number;
-  name: string;
-  location: string | null;
-  description: string | null;
-  active: boolean;
-  sensor_type: SensorType;
-  created_at: string;
-  updated_at: string;
-}
 
 interface Reading {
   timestamp: Date;
@@ -80,7 +60,7 @@ const sensorId = computed<number>(() => {
   return isNaN(id) ? 0 : id;
 });
 
-const sensor = ref<SensorData | null>(null);
+const sensor = ref<Sensor | null>(null);
 const readings = ref<Reading[]>([]);
 const latestReading = ref<Reading | null>(null);
 const isLoading = ref<boolean>(true);
@@ -96,6 +76,12 @@ const MAX_READINGS = 50;
 function parseTimestamp(input: any): Date {
   if (!input) return new Date(NaN);
 
+  if (typeof input === "object" && "seconds" in input) {
+    const ms =
+      Number(input.seconds) * 1000 + Number(input.nanos || 0) / 1000000;
+    return new Date(ms);
+  }
+
   const num = Number(input);
   if (!isNaN(num)) {
     return num < 10000000000 ? new Date(num * 1000) : new Date(num);
@@ -106,9 +92,9 @@ function parseTimestamp(input: any): Date {
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleString("pl-PL", {
+    day: "2-digit",
+    month: "short",
     year: "numeric",
-    month: "long",
-    day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -165,39 +151,19 @@ const isValueInRange = computed<boolean>(() => {
 });
 
 async function fetchSensor(): Promise<void> {
-  const token = localStorage.getItem("authToken");
-  if (!token) {
-    error.value = "Nie jesteś zalogowany";
-    router.push("/login");
-    return;
-  }
+  isLoading.value = true;
+  error.value = null;
 
   try {
-    isLoading.value = true;
-    error.value = null;
-
-    const response = await fetch(
-      `http://localhost:8080/api/sensors/${sensorId.value}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    );
-
-    if (response.status === 401) {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-      router.push("/login");
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error(`Błąd serwera: ${response.status}`);
-    }
-
-    sensor.value = await response.json();
+    const data = await api.get<Sensor>(config.endpoints.sensor(sensorId.value));
+    sensor.value = data || null;
   } catch (err: any) {
-    console.error("Fetch sensor error:", err);
-    error.value = err.message || "Nie udało się pobrać danych sensora";
+    if (err instanceof ApiError && err.status === 401) {
+      localStorage.removeItem("authToken");
+      router.push("/login");
+    } else {
+      error.value = err.message || "Nie udało się pobrać danych sensora.";
+    }
   } finally {
     isLoading.value = false;
   }
@@ -227,14 +193,16 @@ async function fetchHistory(): Promise<void> {
     }
 
     const data = await response.json();
+
     const items: ReadingUpdate[] = Array.isArray(data)
       ? data
       : data.readings || [];
-
     const formattedReadings: Reading[] = items
       .map((item: ReadingUpdate): Reading | null => {
         const timestamp = parseTimestamp(item.timestamp);
         const value = parseFloat(item.value.toString());
+
+        console.log(timestamp, value);
 
         if (isNaN(timestamp.getTime()) || isNaN(value)) {
           return null;
@@ -288,7 +256,7 @@ function connectWebSocket(): void {
 
         if (data.sensor_id == sensorId.value) {
           const timestamp = parseTimestamp(data.timestamp);
-          const value = parseFloat(data.value.toString());
+          const value = parseFloat(data.value.toFixed(2));
 
           if (isNaN(timestamp.getTime()) || isNaN(value)) {
             console.warn("Invalid reading received:", data);
