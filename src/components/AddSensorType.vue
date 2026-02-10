@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
-import { api, config, type SensorType } from "@/lib/api";
+import { ref, watch } from "vue";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +17,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -35,9 +36,6 @@ interface AddSensorTypeDialogProps {
   isOpen: boolean;
 }
 
-const isLoading = ref(true);
-const error = ref<string | null>(null);
-
 const props = defineProps<AddSensorTypeDialogProps>();
 const emit = defineEmits<{
   (e: "update:isOpen", value: boolean): void;
@@ -50,9 +48,44 @@ const formData = ref({
   manufacturer: "",
   description: "",
   unit: "",
-  min_value: undefined,
-  max_value: undefined,
+  min_value: undefined as number | undefined,
+  max_value: undefined as number | undefined,
 });
+
+const unitCategories = [
+  {
+    label: "Temperatura",
+    units: ["°C", "°F", "K"],
+  },
+  {
+    label: "Wilgotność / Środowisko",
+    units: ["%", "RH%", "ppm", "ppb", "AQI"],
+  },
+  {
+    label: "Elektryczność",
+    units: ["V", "mV", "kV", "A", "mA", "W", "kW", "kWh", "Hz", "Ω"],
+  },
+  {
+    label: "Ciśnienie",
+    units: ["Pa", "hPa", "kPa", "bar", "psi", "atm"],
+  },
+  {
+    label: "Odległość / Ruch",
+    units: ["m", "cm", "mm", "km", "m/s", "km/h", "rpm"],
+  },
+  {
+    label: "Światło / Dźwięk",
+    units: ["lx", "lm", "cd", "dB", "dB(A)"],
+  },
+  {
+    label: "Objętość / Przepływ",
+    units: ["l", "m³", "l/min", "m³/h"],
+  },
+  {
+    label: "Inne",
+    units: ["count", "boolean (0/1)", "hex", "raw"],
+  },
+];
 
 const resetForm = () => {
   formData.value = {
@@ -83,8 +116,8 @@ const handleSubmit = () => {
     manufacturer: formData.value.manufacturer || undefined,
     description: formData.value.description || undefined,
     unit: formData.value.unit,
-    min_value: formData.value.min_value || undefined,
-    max_value: formData.value.max_value || undefined,
+    min_value: formData.value.min_value,
+    max_value: formData.value.max_value,
   };
   emit("addSensorType", newSensorType);
   emit("update:isOpen", false);
@@ -146,21 +179,35 @@ const onOpenChange = (open: boolean) => {
           </div>
 
           <div class="col-span-2 space-y-2">
-            <Label htmlFor="unit">Jednostka *</Label>
-            <Input
-              id="unit"
-              v-model="formData.unit"
-              placeholder="np. °C, V, Hz"
-              required
-            />
+            <Label>Jednostka *</Label>
+            <Select v-model="formData.unit" required>
+              <SelectTrigger>
+                <SelectValue placeholder="Wybierz jednostkę miary" />
+              </SelectTrigger>
+              <SelectContent class="max-h-[200px]">
+                <SelectGroup
+                  v-for="category in unitCategories"
+                  :key="category.label"
+                >
+                  <SelectLabel>{{ category.label }}</SelectLabel>
+                  <SelectItem
+                    v-for="unit in category.units"
+                    :key="unit"
+                    :value="unit"
+                  >
+                    {{ unit }}
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-
           <div class="space-y-2">
             <Label htmlFor="min_value">Wartość minimalna</Label>
             <Input
               id="min_value"
               v-model.number="formData.min_value"
               type="number"
+              step="any"
             />
           </div>
 
@@ -170,6 +217,7 @@ const onOpenChange = (open: boolean) => {
               id="max_value"
               v-model.number="formData.max_value"
               type="number"
+              step="any"
             />
           </div>
 
