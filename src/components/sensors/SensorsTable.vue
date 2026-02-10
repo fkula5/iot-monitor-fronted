@@ -81,7 +81,7 @@ function formatDate(dateString: string): string {
         :key="sensor.id"
         class="bg-white hover:bg-gray-50 border border-gray-100 rounded-lg"
       >
-        <TableCell class="font-medium rounded-l-lg">
+        <TableCell class="font-medium rounded-l-lg text-left">
           <div class="flex items-center gap-3">
             <div
               :class="[
@@ -103,15 +103,15 @@ function formatDate(dateString: string): string {
             </div>
           </div>
         </TableCell>
-        <TableCell>
+        <TableCell class="text-left">
           <Badge variant="secondary" class="font-normal">
             {{ sensor.sensor_type.name }}
           </Badge>
         </TableCell>
-        <TableCell class="text-sm text-gray-600">
+        <TableCell class="text-sm text-gray-600 text-left">
           {{ sensor.location || "—" }}
         </TableCell>
-        <TableCell>
+        <TableCell class="text-left">
           <Badge
             :variant="sensor.active ? 'default' : 'secondary'"
             :class="[
@@ -123,7 +123,7 @@ function formatDate(dateString: string): string {
             {{ sensor.active ? "Aktywny" : "Nieaktywny" }}
           </Badge>
         </TableCell>
-        <TableCell class="text-sm text-gray-600">
+        <TableCell class="text-sm text-gray-600 text-left">
           {{ formatDate(sensor.created_at) }}
         </TableCell>
         <TableCell class="text-right rounded-r-lg">

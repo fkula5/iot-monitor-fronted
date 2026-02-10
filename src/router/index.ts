@@ -7,6 +7,7 @@ import DashboardView from "@/views/DashboardView.vue";
 import AlertsView from "@/views/AlertsView.vue";
 import SensorDetailView from "@/views/SensorDetailView.vue";
 import SensorGroupsView from "@/views/SensorGroupsView.vue";
+import SensorTypeView from "@/views/SensorTypeView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -35,6 +36,11 @@ const router = createRouter({
           name: "SensorDetail",
           component: SensorDetailView,
           props: true,
+        },
+        {
+          path: "sensor-types",
+          name: "SensorTypes",
+          component: SensorTypeView,
         },
         {
           path: "groups",

@@ -1,6 +1,13 @@
 <script lang="ts" setup>
 import { RouterLink } from "vue-router";
-import { Activity, AlertTriangle, Home, Gauge, Folder } from "lucide-vue-next";
+import {
+  Activity,
+  AlertTriangle,
+  Home,
+  Gauge,
+  Folder,
+  RadioReceiver,
+} from "lucide-vue-next";
 </script>
 
 <template>
@@ -35,6 +42,16 @@ import { Activity, AlertTriangle, Home, Gauge, Folder } from "lucide-vue-next";
           >
             <Activity :class="['h-4 w-4', isActive && 'text-blue-700']" />
             <span :class="[isActive && 'font-semibold']">Sensory</span>
+          </RouterLink>
+
+          <RouterLink
+            to="/panel/sensor-types"
+            active-class="bg-blue-50 text-blue-700"
+            v-slot="{ isActive }"
+            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 transition-all hover:bg-gray-100"
+          >
+            <RadioReceiver :class="['h-4 w-4', isActive && 'text-blue-700']" />
+            <span :class="[isActive && 'font-semibold']">Typy Sensorów</span>
           </RouterLink>
 
           <RouterLink
