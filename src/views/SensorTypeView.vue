@@ -14,11 +14,14 @@ import LoadingSkeleton from "@/components/shared/LoadingSkeleton.vue";
 import SensorTypesTable from "@/components/sensortypes/SensorTypesTable.vue";
 import AddSensorType from "@/components/AddSensorType.vue";
 import SearchFilterBar from "@/components/shared/SearchFilterBar.vue";
+import EditSensorType from "@/components/sensortypes/EditSensorType.vue";
 
 const sensorTypes = ref<SensorType[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const isAddSensorTypeDialogOpen = ref(false);
+const isEditSensorTypeDialogOpen = ref(false);
+const selectedSensorType = ref<SensorType | null>(null);
 
 async function fetchSensorTypes() {
   isLoading.value = true;
@@ -37,6 +40,11 @@ async function fetchSensorTypes() {
   }
 }
 
+function openEditDialog(sensorType: SensorType) {
+  selectedSensorType.value = sensorType;
+  isEditSensorTypeDialogOpen.value = true;
+}
+
 async function handleAddSensorType(newSensorType: { name: string }) {
   isLoading.value = true;
   error.value = null;
@@ -44,12 +52,36 @@ async function handleAddSensorType(newSensorType: { name: string }) {
   try {
     await api.post(config.endpoints.sensorTypes, newSensorType);
     isAddSensorTypeDialogOpen.value = false;
+    selectedSensorType.value = null;
     await fetchSensorTypes();
   } catch (err) {
     error.value =
       err instanceof ApiError
         ? err.message
         : "Nie udało się dodać nowego typu sensora.";
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+async function handlerEditSensorType(updatedData: SensorType) {
+  isLoading.value = true;
+  error.value = null;
+  selectedSensorType.value = null;
+
+  try {
+    await api.put(
+      `${config.endpoints.sensorType(updatedData.id)}`,
+      updatedData,
+    );
+    isEditSensorTypeDialogOpen.value = false;
+    await fetchSensorTypes();
+  } catch (err) {
+    error.value =
+      err instanceof ApiError
+        ? err.message
+        : "Nie udało się zaktualizować typu sensora.";
+    console.error("Error updating sensor type:", err);
   } finally {
     isLoading.value = false;
   }
@@ -113,7 +145,10 @@ const stats = computed(() => ({
         <LoadingSkeleton v-if="isLoading" type="table" :count="5" />
 
         <template v-else>
-          <SensorTypesTable :sensor-types="sensorTypes" />
+          <SensorTypesTable
+            :sensor-types="sensorTypes"
+            @edit="openEditDialog"
+          />
           <div class="mt-4 text-sm text-gray-600 text-center">
             Wyświetlono {{ sensorTypes.length }} typów sensorów.
           </div>
@@ -125,6 +160,14 @@ const stats = computed(() => ({
       :is-open="isAddSensorTypeDialogOpen"
       @update:is-open="isAddSensorTypeDialogOpen = $event"
       @add-sensor-type="handleAddSensorType"
+    />
+
+    <EditSensorType
+      v-if="selectedSensorType"
+      :is-open="isEditSensorTypeDialogOpen"
+      :sensor-type="selectedSensorType"
+      @update:is-open="isEditSensorTypeDialogOpen = $event"
+      @update-sensor-type="handlerEditSensorType"
     />
   </div>
 </template>

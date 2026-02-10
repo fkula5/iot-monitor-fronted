@@ -11,6 +11,7 @@ export const config = {
     sensors: "/api/sensors",
     sensor: (id: number) => `/api/sensors/${id}`,
     sensorTypes: "/api/sensor-types",
+    sensorType: (id: number) => `/api/sensor-types/${id}`,
     sensorGroups: "/api/sensor-groups",
     sensorGroup: (id: number) => `/api/sensor-groups/${id}`,
 

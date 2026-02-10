@@ -25,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 interface EditSensorTypeProps {
   isOpen: boolean;
-  sensorType: SensorType | null;
+  sensorType: SensorType;
 }
 
 const props = defineProps<EditSensorTypeProps>();

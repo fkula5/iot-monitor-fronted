@@ -52,7 +52,6 @@ const emit = defineEmits<{
 }>();
 
 function formatDate(dateString: string): string {
-  console.log("Formatting date:", dateString);
   return new Date(dateString).toLocaleString("pl-PL", {
     day: "2-digit",
     month: "short",

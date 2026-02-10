@@ -1,42 +1,41 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import PageHeader from "@/components/shared/PageHeader.vue";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-vue-next";
 import EditSensorType from "@/components/sensortypes/EditSensorType.vue";
-import type { SensorType } from "@/lib/api";
-import { int } from "zod/v4";
+import { api, config, type SensorType } from "@/lib/api";
 
 const route = useRoute();
 const router = useRouter();
-const sensorTypeId = route.params.id as string;
+const sensorTypeId = Number(route.params.id);
 
-// Mock Data - Replace with actual API call
 const sensorType = ref<SensorType | null>(null);
+const isLoading = ref(true);
+const error = ref<string | null>(null);
 const isEditOpen = ref(false);
 
-const fetchDetail = async () => {
-  // Simulate API call
-  setTimeout(() => {
-    sensorType.value = {
-      id: parseInt(sensorTypeId),
-      name: "Sensor Temperatury",
-      model: "DS18B20",
-      manufacturer: "Maxim Integrated",
-      unit: "°C",
-      description: "Standardowy cyfrowy czujnik temperatury 1-Wire.",
-      min_value: -55,
-      max_value: 125,
-      created_at: "2023-01-01",
-    };
-  }, 500);
-};
+async function fetchSensorType() {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    const data = await api.get<SensorType>(
+      config.endpoints.sensorType(sensorTypeId),
+    );
+    sensorType.value = data;
+    console.log("Fetched sensor type:", data);
+  } catch (err) {
+    error.value = "Nie udało się załadować typu sensora.";
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 onMounted(() => {
-  fetchDetail();
+  fetchSensorType();
 });
 
 const handleUpdate = (updated: SensorType) => {
