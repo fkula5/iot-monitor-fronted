@@ -21,72 +21,72 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-export interface NewSensor {
+export interface NewSensorType {
   name: string;
-  sensor_type_id: number;
-  location: string;
+  model: string;
+  manufacturer?: string;
   description?: string;
+  unit: string;
+  min_value?: number;
+  max_value?: number;
 }
 
-interface AddSensorDialogProps {
+interface AddSensorTypeDialogProps {
   isOpen: boolean;
 }
 
 const isLoading = ref(true);
 const error = ref<string | null>(null);
-const sensorTypes = ref<SensorType[]>([]);
 
-async function fetchSensorTypes() {
-  try {
-    isLoading.value = true;
-    const data = await api.get<SensorType[]>(config.endpoints.sensorTypes);
-    sensorTypes.value = data || [];
-  } catch (err: any) {
-    error.value = err.message || "Nie udało się pobrać typów sensorów.";
-  } finally {
-    isLoading.value = false;
-  }
-}
-
-const props = defineProps<AddSensorDialogProps>();
+const props = defineProps<AddSensorTypeDialogProps>();
 const emit = defineEmits<{
   (e: "update:isOpen", value: boolean): void;
-  (e: "addSensor", sensor: NewSensor): void;
+  (e: "addSensorType", sensorType: NewSensorType): void;
 }>();
 
 const formData = ref({
   name: "",
-  type: "",
-  location: "",
+  model: "",
+  manufacturer: "",
   description: "",
+  unit: "",
+  min_value: undefined,
+  max_value: undefined,
 });
 
 const resetForm = () => {
   formData.value = {
     name: "",
-    type: "",
-    location: "",
+    model: "",
+    manufacturer: "",
     description: "",
+    unit: "",
+    min_value: undefined,
+    max_value: undefined,
   };
 };
 
 const handleSubmit = () => {
   if (
     !formData.value.name ||
-    !formData.value.type ||
-    !formData.value.location
+    !formData.value.model ||
+    !formData.value.manufacturer ||
+    !formData.value.unit
   ) {
     alert("Proszę wypełnić wszystkie wymagane pola.");
     return;
   }
 
-  const newSensor: NewSensor = {
+  const newSensorType: NewSensorType = {
     name: formData.value.name,
-    sensor_type_id: Number(formData.value.type),
-    location: formData.value.location,
+    model: formData.value.model,
+    manufacturer: formData.value.manufacturer || undefined,
     description: formData.value.description || undefined,
+    unit: formData.value.unit,
+    min_value: formData.value.min_value || undefined,
+    max_value: formData.value.max_value || undefined,
   };
-  emit("addSensor", newSensor);
+  emit("addSensorType", newSensorType);
   emit("update:isOpen", false);
 };
 
@@ -102,56 +102,74 @@ watch(
 const onOpenChange = (open: boolean) => {
   emit("update:isOpen", open);
 };
-
-onMounted(fetchSensorTypes);
 </script>
 
 <template>
   <Dialog :open="isOpen" @update:open="onOpenChange">
     <DialogContent class="sm:max-w-[500px]">
       <DialogHeader>
-        <DialogTitle>Dodaj Nowy Sensor</DialogTitle>
+        <DialogTitle>Dodaj nowy typ sensora</DialogTitle>
         <DialogDescription>
-          Wypełnij dane, aby dodać nowy sensor do sieci
+          Wypełnij dane, aby dodać nowy typ sensora do systemu
         </DialogDescription>
       </DialogHeader>
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div class="col-span-2 space-y-2">
-            <Label htmlFor="name">Nazwa Sensora *</Label>
+            <Label htmlFor="name">Nazwa Typu Sensora *</Label>
             <Input
               id="name"
               v-model="formData.name"
-              placeholder="np. Sensor Temperatury A1"
+              placeholder="np. Sensor Temperatury"
               required
             />
           </div>
 
           <div class="space-y-2">
-            <Label htmlFor="type">Typ Sensora *</Label>
-            <Select v-model="formData.type" required>
-              <SelectTrigger id="type">
-                <SelectValue placeholder="Wybierz typ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="type in sensorTypes"
-                  :key="type.id"
-                  :value="type.id"
-                >
-                  {{ type.name }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="model">Model *</Label>
+            <Input
+              id="model"
+              v-model="formData.model"
+              placeholder="np. DS18B20"
+              required
+            />
           </div>
 
           <div class="space-y-2">
-            <Label htmlFor="location">Lokalizacja *</Label>
+            <Label htmlFor="manufacturer">Producent *</Label>
             <Input
-              id="location"
-              v-model="formData.location"
-              placeholder="np. Serwerownia"
+              id="manufacturer"
+              v-model="formData.manufacturer"
+              placeholder="np. Maxim Integrated"
               required
+            />
+          </div>
+
+          <div class="col-span-2 space-y-2">
+            <Label htmlFor="unit">Jednostka *</Label>
+            <Input
+              id="unit"
+              v-model="formData.unit"
+              placeholder="np. °C, V, Hz"
+              required
+            />
+          </div>
+
+          <div class="space-y-2">
+            <Label htmlFor="min_value">Wartość minimalna</Label>
+            <Input
+              id="min_value"
+              v-model.number="formData.min_value"
+              type="number"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <Label htmlFor="max_value">Wartość maksymalna</Label>
+            <Input
+              id="max_value"
+              v-model.number="formData.max_value"
+              type="number"
             />
           </div>
 
@@ -170,7 +188,7 @@ onMounted(fetchSensorTypes);
           <DialogClose as-child>
             <Button type="button" variant="outline">Anuluj</Button>
           </DialogClose>
-          <Button type="submit">Dodaj Sensor</Button>
+          <Button type="submit">Dodaj typ sensora</Button>
         </div>
       </form>
     </DialogContent>

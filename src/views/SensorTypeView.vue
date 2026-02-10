@@ -12,10 +12,14 @@ import CardTitle from "@/components/ui/card/CardTitle.vue";
 import CardContent from "@/components/ui/card/CardContent.vue";
 import LoadingSkeleton from "@/components/shared/LoadingSkeleton.vue";
 import SensorTypesTable from "@/components/sensortypes/SensorTypesTable.vue";
+import AddSensorType from "@/components/AddSensorType.vue";
+import SearchFilterBar from "@/components/shared/SearchFilterBar.vue";
 
 const sensorTypes = ref<SensorType[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const isAddSensorTypeDialogOpen = ref(false);
+
 async function fetchSensorTypes() {
   isLoading.value = true;
   error.value = null;
@@ -33,9 +37,25 @@ async function fetchSensorTypes() {
   }
 }
 
-onMounted(() => {
-  fetchSensorTypes();
-});
+async function handleAddSensorType(newSensorType: { name: string }) {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    await api.post(config.endpoints.sensorTypes, newSensorType);
+    isAddSensorTypeDialogOpen.value = false;
+    await fetchSensorTypes();
+  } catch (err) {
+    error.value =
+      err instanceof ApiError
+        ? err.message
+        : "Nie udało się dodać nowego typu sensora.";
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(fetchSensorTypes);
 
 const stats = computed(() => ({
   total: sensorTypes.value.length,
@@ -80,6 +100,13 @@ const stats = computed(() => ({
           class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         >
           <CardTitle>Lista typów dostępnych typów sensorów</CardTitle>
+          <SearchFilterBar
+            placeholder="Szukaj typów..."
+            :is-loading="isLoading"
+            add-label="Dodaj typ sensora"
+            @refresh="fetchSensorTypes"
+            @add="isAddSensorTypeDialogOpen = true"
+          />
         </div>
       </CardHeader>
       <CardContent>
@@ -93,5 +120,11 @@ const stats = computed(() => ({
         </template>
       </CardContent>
     </Card>
+
+    <AddSensorType
+      :is-open="isAddSensorTypeDialogOpen"
+      @update:is-open="isAddSensorTypeDialogOpen = $event"
+      @add-sensor-type="handleAddSensorType"
+    />
   </div>
 </template>
