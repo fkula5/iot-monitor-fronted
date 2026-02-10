@@ -26,7 +26,7 @@ export interface SensorType {
   unit: string;
   min_value: number;
   max_value: number;
-  model?: string;
+  model: string;
   manufacturer?: string;
   description?: string;
   created_at: string;
