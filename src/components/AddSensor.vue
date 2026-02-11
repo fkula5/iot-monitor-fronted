@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useRouter } from "vue-router";
 
 export interface NewSensor {
   name: string;
@@ -36,7 +35,6 @@ interface AddSensorDialogProps {
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const sensorTypes = ref<SensorType[]>([]);
-const router = useRouter();
 
 async function fetchSensorTypes() {
   try {

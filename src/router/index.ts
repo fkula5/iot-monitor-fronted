@@ -7,6 +7,8 @@ import DashboardView from "@/views/DashboardView.vue";
 import AlertsView from "@/views/AlertsView.vue";
 import SensorDetailView from "@/views/SensorDetailView.vue";
 import SensorGroupsView from "@/views/SensorGroupsView.vue";
+import SensorTypeView from "@/views/SensorTypeView.vue";
+import SensorTypeDetailView from "@/views/SensorTypeDetailView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -22,28 +24,39 @@ const router = createRouter({
       children: [
         {
           path: "",
-          name: "MainPanel",
+          name: "Dashboard",
           component: DashboardView,
         },
         {
           path: "sensors",
-          name: "Sensors",
+          name: "Sensory",
           component: SensorsView,
         },
         {
           path: "sensors/:id",
-          name: "SensorDetail",
+          name: "Szczegóły sensora",
           component: SensorDetailView,
           props: true,
         },
         {
+          path: "sensor-types",
+          name: "Typy sesnorów",
+          component: SensorTypeView,
+        },
+        {
+          path: "sensor-types/:id",
+          name: "Szczegóły typu sensora",
+          component: SensorTypeDetailView,
+          props: true,
+        },
+        {
           path: "groups",
-          name: "SensorGroups",
+          name: "Grupy sensorów",
           component: SensorGroupsView,
         },
         {
           path: "alerts",
-          name: "Alerts",
+          name: "Alerty",
           component: AlertsView,
         },
       ],

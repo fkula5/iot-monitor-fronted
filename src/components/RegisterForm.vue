@@ -70,8 +70,6 @@ const onSubmit = handleSubmit(async (values) => {
       registerData,
     );
 
-    console.log("Rejestracja udana:", data);
-
     if (data.token) {
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));

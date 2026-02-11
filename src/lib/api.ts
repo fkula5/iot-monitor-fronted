@@ -11,6 +11,7 @@ export const config = {
     sensors: "/api/sensors",
     sensor: (id: number) => `/api/sensors/${id}`,
     sensorTypes: "/api/sensor-types",
+    sensorType: (id: number) => `/api/sensor-types/${id}`,
     sensorGroups: "/api/sensor-groups",
     sensorGroup: (id: number) => `/api/sensor-groups/${id}`,
 
@@ -26,7 +27,7 @@ export interface SensorType {
   unit: string;
   min_value: number;
   max_value: number;
-  model?: string;
+  model: string;
   manufacturer?: string;
   description?: string;
   created_at: string;
@@ -165,6 +166,10 @@ export const api = {
         response.status,
         `DELETE ${endpoint} failed: ${response.statusText}`,
       );
+    }
+
+    if (response.status === 204) {
+      return {} as T;
     }
 
     return response.json();

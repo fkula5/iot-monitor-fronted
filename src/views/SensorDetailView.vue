@@ -27,6 +27,7 @@ import {
   WifiOff,
 } from "lucide-vue-next";
 import SensorDataChart from "@/components/SensorDataChart.vue";
+import PageHeader from "@/components/shared/PageHeader.vue";
 
 interface Reading {
   timestamp: Date;
@@ -346,65 +347,61 @@ onUnmounted(() => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <Button
-          @click="router.push('/panel/sensors')"
-          variant="ghost"
-          size="sm"
-        >
-          <ArrowLeft class="h-4 w-4 mr-2" />
-          Powrót
-        </Button>
-        <div>
-          <h1 class="text-3xl font-bold tracking-tight">
-            {{ sensor?.name || "Sensor" }}
-          </h1>
-          <p class="text-muted-foreground mt-1">
-            {{ sensor?.sensor_type.name }} - Dane w czasie rzeczywistym
-          </p>
+    <PageHeader
+      :title="sensor?.name || 'Sensor'"
+      :description="`${sensor?.sensor_type.name || ''} — Dane w czasie rzeczywistym`"
+    >
+      <template #actions>
+        <div class="flex items-center gap-3">
+          <Button
+            @click="router.push('/panel/sensors')"
+            variant="outline"
+            size="sm"
+          >
+            <ArrowLeft class="h-4 w-4 mr-2" />
+            Powrót
+          </Button>
+
+          <Badge
+            :variant="
+              connectionStatus === 'connected'
+                ? 'default'
+                : connectionStatus === 'error'
+                  ? 'destructive'
+                  : 'secondary'
+            "
+            class="px-3 py-1"
+          >
+            <component
+              :is="connectionStatus === 'connected' ? Wifi : WifiOff"
+              :class="[
+                'h-3.5 w-3.5 mr-2',
+                connectionStatus === 'connected' && 'animate-pulse',
+              ]"
+            />
+            {{
+              connectionStatus === "connected"
+                ? "Połączono"
+                : connectionStatus === "error"
+                  ? "Błąd"
+                  : "Rozłączono"
+            }}
+          </Badge>
+
+          <Button
+            @click="manualReconnect"
+            variant="outline"
+            size="sm"
+            :disabled="isConnecting || connectionStatus === 'connected'"
+          >
+            <RefreshCw
+              :class="['h-4 w-4 mr-2', isConnecting && 'animate-spin']"
+            />
+            Połącz ponownie
+          </Button>
         </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <Badge
-          :variant="
-            connectionStatus === 'connected'
-              ? 'default'
-              : connectionStatus === 'error'
-                ? 'destructive'
-                : 'secondary'
-          "
-        >
-          <component
-            :is="connectionStatus === 'connected' ? Wifi : WifiOff"
-            :class="[
-              'h-3 w-3 mr-1',
-              connectionStatus === 'connected' && 'animate-pulse',
-            ]"
-          />
-          {{
-            connectionStatus === "connected"
-              ? "Połączono"
-              : connectionStatus === "error"
-                ? "Błąd"
-                : "Rozłączono"
-          }}
-        </Badge>
-
-        <Button
-          @click="manualReconnect"
-          variant="outline"
-          size="sm"
-          :disabled="isConnecting || connectionStatus === 'connected'"
-        >
-          <RefreshCw
-            :class="['h-4 w-4 mr-2', isConnecting && 'animate-spin']"
-          />
-          Połącz ponownie
-        </Button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <Alert v-if="error" variant="destructive">
       <AlertCircle class="h-4 w-4" />
