@@ -198,6 +198,7 @@ const stats = computed(() => ({
           <SensorTypesTable
             :sensor-types="filteredSensorTypes"
             @edit="openEditDialog"
+            @delete="handleDeleteSensorType"
           />
           <div class="mt-4 text-sm text-gray-600 text-center">
             Wyświetlono {{ filteredSensorTypes.length }} z
