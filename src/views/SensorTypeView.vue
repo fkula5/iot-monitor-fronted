@@ -15,10 +15,12 @@ import SensorTypesTable from "@/components/sensortypes/SensorTypesTable.vue";
 import AddSensorType from "@/components/AddSensorType.vue";
 import SearchFilterBar from "@/components/shared/SearchFilterBar.vue";
 import EditSensorType from "@/components/sensortypes/EditSensorType.vue";
+import EmptyState from "@/components/shared/EmptyState.vue";
 
 const sensorTypes = ref<SensorType[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const searchTerm = ref("");
 const isAddSensorTypeDialogOpen = ref(false);
 const isEditSensorTypeDialogOpen = ref(false);
 const selectedSensorType = ref<SensorType | null>(null);
@@ -87,7 +89,40 @@ async function handlerEditSensorType(updatedData: SensorType) {
   }
 }
 
+async function handleDeleteSensorType(id: number) {
+  if (!confirm("Czy na pewno chcesz usunąć ten typ sensora?")) {
+    return;
+  }
+
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    await api.delete(config.endpoints.sensorType(id));
+    await fetchSensorTypes();
+  } catch (err) {
+    error.value =
+      err instanceof ApiError
+        ? err.message
+        : "Nie udało się usunąć typu sensora.";
+  } finally {
+    isLoading.value = false;
+  }
+}
+
 onMounted(fetchSensorTypes);
+
+const filteredSensorTypes = computed(() => {
+  if (!searchTerm.value) return sensorTypes.value;
+
+  const query = searchTerm.value.toLowerCase();
+  return sensorTypes.value.filter(
+    (type) =>
+      type.name.toLowerCase().includes(query) ||
+      type.model.toLowerCase().includes(query) ||
+      type.manufacturer?.toLowerCase().includes(query),
+  );
+});
 
 const stats = computed(() => ({
   total: sensorTypes.value.length,
@@ -133,6 +168,7 @@ const stats = computed(() => ({
         >
           <CardTitle>Lista typów dostępnych typów sensorów</CardTitle>
           <SearchFilterBar
+            v-model="searchTerm"
             placeholder="Szukaj typów..."
             :is-loading="isLoading"
             add-label="Dodaj typ sensora"
@@ -144,13 +180,28 @@ const stats = computed(() => ({
       <CardContent>
         <LoadingSkeleton v-if="isLoading" type="table" :count="5" />
 
+        <EmptyState
+          v-else-if="filteredSensorTypes.length === 0"
+          :title="searchTerm ? 'Brak wyników' : 'Brak typów sensorów'"
+          :description="
+            searchTerm
+              ? 'Nie znaleziono typów sensorów spełniających kryteria wyszukiwania.'
+              : 'Nie znaleziono żadnych typów sensorów. Dodaj nowy typ, aby zacząć.'
+          "
+          :icon="Activity"
+          :show-card="false"
+        >
+          <template v-if="!searchTerm"></template>
+        </EmptyState>
+
         <template v-else>
           <SensorTypesTable
-            :sensor-types="sensorTypes"
+            :sensor-types="filteredSensorTypes"
             @edit="openEditDialog"
           />
           <div class="mt-4 text-sm text-gray-600 text-center">
-            Wyświetlono {{ sensorTypes.length }} typów sensorów.
+            Wyświetlono {{ filteredSensorTypes.length }} z
+            {{ sensorTypes.length }} typów sensorów.
           </div>
         </template>
       </CardContent>

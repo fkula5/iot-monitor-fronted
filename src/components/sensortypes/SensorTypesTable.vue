@@ -66,8 +66,8 @@ function formatDate(dateString: string): string {
             <p class="text-xs text-gray-500">ID: {{ sensorType.id }}</p>
           </div>
         </TableCell>
-        <TableCell class="text-left">{{ sensorType.manufacturer }}</TableCell>
         <TableCell class="text-left">{{ sensorType.model }}</TableCell>
+        <TableCell class="text-left">{{ sensorType.manufacturer }}</TableCell>
         <TableCell class="text-left">{{ sensorType.unit }}</TableCell>
         <TableCell class="text-left">{{ sensorType.min_value }}</TableCell>
         <TableCell class="text-left">{{ sensorType.max_value }}</TableCell>

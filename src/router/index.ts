@@ -24,39 +24,39 @@ const router = createRouter({
       children: [
         {
           path: "",
-          name: "MainPanel",
+          name: "Dashboard",
           component: DashboardView,
         },
         {
           path: "sensors",
-          name: "Sensors",
+          name: "Sensory",
           component: SensorsView,
         },
         {
           path: "sensors/:id",
-          name: "SensorDetail",
+          name: "Szczegóły sensora",
           component: SensorDetailView,
           props: true,
         },
         {
           path: "sensor-types",
-          name: "SensorTypes",
+          name: "Typy sesnorów",
           component: SensorTypeView,
         },
         {
           path: "sensor-types/:id",
-          name: "SensorTypeDetail",
+          name: "Szczegóły typu sensora",
           component: SensorTypeDetailView,
           props: true,
         },
         {
           path: "groups",
-          name: "SensorGroups",
+          name: "Grupy sensorów",
           component: SensorGroupsView,
         },
         {
           path: "alerts",
-          name: "Alerts",
+          name: "Alerty",
           component: AlertsView,
         },
       ],
