@@ -15,14 +15,17 @@ import SensorsTable from "@/components/sensors/SensorsTable.vue";
 import AddSensor from "@/components/AddSensor.vue";
 
 import type { NewSensor } from "@/components/AddSensor.vue";
+import { toast } from "vue-sonner";
+import EditSensor from "@/components/sensors/EditSensor.vue";
 
 const router = useRouter();
-
 const sensors = ref<Sensor[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const searchTerm = ref("");
 const isAddSensorDialogOpen = ref(false);
+const isEditSensorDialogOpen = ref(false);
+const selectedSensor = ref<Sensor | null>(null);
 
 async function fetchSensors() {
   isLoading.value = true;
@@ -53,11 +56,52 @@ async function handleAddSensor(newSensor: NewSensor) {
     isAddSensorDialogOpen.value = false;
     await fetchSensors();
   } catch (err: any) {
-    console.error("Błąd dodawania sensora:", err);
+    toast.error(err.message || "Błąd podczas dodawania sensora");
     error.value = err.message || "Nie udało się dodać sensora.";
   } finally {
     isLoading.value = false;
+    toast.success("Sensor został dodany pomyślnie!");
   }
+}
+
+async function handleUpdateSensor(updatedSensor: Sensor) {
+  isLoading.value = true;
+  error.value = null;
+  selectedSensor.value = null;
+
+  try {
+    await api.put(
+      `${config.endpoints.sensors}/${updatedSensor.id}`,
+      updatedSensor,
+    );
+    await fetchSensors();
+  } catch (err: any) {
+    toast.error(err.message || "Błąd podczas aktualizacji");
+  } finally {
+    isLoading.value = false;
+    isEditSensorDialogOpen.value = false;
+    toast.success("Sensor został zaktualizowany pomyślnie!");
+  }
+}
+
+async function handleDeleteSensor(id: number) {
+  if (!confirm("Czy na pewno chcesz usunąć ten sensor?")) return;
+
+  isLoading.value = true;
+  try {
+    await api.delete(`${config.endpoints.sensors}/${id}`);
+    toast.success("Sensor został usunięty");
+    await fetchSensors();
+  } catch (err: any) {
+    toast.error(err.message || "Błąd podczas usuwania");
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+function openEditDialog(sensor: Sensor) {
+  selectedSensor.value = sensor;
+  isEditSensorDialogOpen.value = true;
 }
 
 onMounted(fetchSensors);
@@ -153,7 +197,11 @@ const stats = computed(() => ({
         </EmptyState>
 
         <template v-else>
-          <SensorsTable :sensors="filteredSensors" />
+          <SensorsTable
+            :sensors="filteredSensors"
+            @edit="openEditDialog"
+            @delete="handleDeleteSensor"
+          />
           <div class="mt-4 text-sm text-gray-600 text-center">
             Wyświetlono {{ filteredSensors.length }} z
             {{ sensors.length }} sensorów
@@ -166,6 +214,14 @@ const stats = computed(() => ({
       :is-open="isAddSensorDialogOpen"
       @update:is-open="isAddSensorDialogOpen = $event"
       @add-sensor="handleAddSensor"
+    />
+
+    <EditSensor
+      v-if="selectedSensor"
+      :is-open="isEditSensorDialogOpen"
+      :sensor="selectedSensor"
+      @update:is-open="isEditSensorDialogOpen = $event"
+      @update-sensor="handleUpdateSensor"
     />
   </div>
 </template>

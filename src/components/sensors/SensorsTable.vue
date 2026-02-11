@@ -24,21 +24,7 @@ import {
   XCircle,
 } from "lucide-vue-next";
 import { RouterLink } from "vue-router";
-
-interface SensorType {
-  id: number;
-  name: string;
-  unit: string;
-}
-
-interface Sensor {
-  id: number;
-  name: string;
-  location: string | null;
-  active: boolean;
-  sensor_type: SensorType;
-  created_at: string;
-}
+import { type Sensor } from "@/lib/api";
 
 interface Props {
   sensors: Sensor[];
