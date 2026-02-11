@@ -39,16 +39,23 @@ onMounted(() => {
   fetchSensorType();
 });
 
-const handleUpdate = (updated: SensorType) => {
-  sensorType.value = updated;
-  // TODO: Send update to API here
-  console.log("Updating sensor type:", updated);
-};
-
 const handleDelete = () => {
   if (confirm("Czy na pewno chcesz usunąć ten typ sensora?")) {
-    console.log("Deleting...");
-    router.push("/sensor-types");
+    isLoading.value = true;
+    error.value = null;
+    api
+      .delete(config.endpoints.sensorType(sensorTypeId))
+      .then(() => {
+        alert("Typ sensora został usunięty.");
+        router.push("/sensor-types");
+      })
+      .catch(() => {
+        error.value = "Nie udało się usunąć typu sensora.";
+      })
+      .finally(() => {
+        isLoading.value = false;
+        router.push("/panel/sensor-types");
+      });
   }
 };
 </script>
