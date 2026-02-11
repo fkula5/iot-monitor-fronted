@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-vue-next";
 import EditSensorType from "@/components/sensortypes/EditSensorType.vue";
 import { api, config, type SensorType } from "@/lib/api";
+import PageHeader from "@/components/shared/PageHeader.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -54,83 +55,120 @@ const handleDelete = () => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-4">
-        <Button variant="outline" size="icon" @click="router.back()">
-          <ArrowLeft class="h-4 w-4" />
-        </Button>
-        <div>
-          <h2 class="text-3xl font-bold tracking-tight" v-if="sensorType">
-            {{ sensorType.name }}
-          </h2>
-          <p class="text-muted-foreground" v-if="sensorType">
-            {{ sensorType.model }}
-          </p>
-          <div v-else class="h-8 w-48 animate-pulse bg-muted rounded"></div>
+    <PageHeader
+      :title="sensorType?.name || 'Szczegóły typu sensora'"
+      :description="
+        sensorType?.model || 'Szczegółowe parametry techniczne urządzenia'
+      "
+    >
+      <template #actions>
+        <div class="flex gap-2">
+          <Button variant="outline" size="sm" @click="router.back()">
+            <ArrowLeft class="mr-2 h-4 w-4" /> Powrót
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            @click="handleDelete"
+            :disabled="!sensorType"
+          >
+            <Trash2 class="mr-2 h-4 w-4" /> Usuń
+          </Button>
+          <Button size="sm" @click="isEditOpen = true" :disabled="!sensorType">
+            <Pencil class="mr-2 h-4 w-4" /> Edytuj
+          </Button>
         </div>
-      </div>
+      </template>
+    </PageHeader>
 
-      <div class="flex gap-2">
-        <Button
-          variant="destructive"
-          @click="handleDelete"
-          :disabled="!sensorType"
-        >
-          <Trash2 class="mr-2 h-4 w-4" /> Usuń
-        </Button>
-        <Button @click="isEditOpen = true" :disabled="!sensorType">
-          <Pencil class="mr-2 h-4 w-4" /> Edytuj
-        </Button>
-      </div>
-    </div>
-
-    <div class="grid gap-6 md:grid-cols-2" v-if="sensorType">
-      <Card>
+    <div v-if="sensorType" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <Card class="lg:col-span-2">
         <CardHeader>
           <CardTitle>Podstawowe informacje</CardTitle>
         </CardHeader>
-        <CardContent class="space-y-4">
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div class="text-muted-foreground">Model</div>
-            <div class="font-medium">{{ sensorType.model }}</div>
-
-            <div class="text-muted-foreground">Producent</div>
-            <div class="font-medium">{{ sensorType.manufacturer || "-" }}</div>
-
-            <div class="text-muted-foreground">Jednostka</div>
-            <div>
-              <Badge variant="secondary">{{ sensorType.unit }}</Badge>
+        <CardContent>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
+            <div class="space-y-1">
+              <p
+                class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+              >
+                Model
+              </p>
+              <p class="font-semibold">{{ sensorType.model }}</p>
             </div>
-
-            <div class="text-muted-foreground">ID Systemowe</div>
-            <div class="font-mono text-xs">{{ sensorType.id }}</div>
+            <div class="space-y-1">
+              <p
+                class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+              >
+                Producent
+              </p>
+              <p class="font-semibold">
+                {{ sensorType.manufacturer || "Nieokreślony" }}
+              </p>
+            </div>
+            <div class="space-y-1">
+              <p
+                class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+              >
+                Jednostka miary
+              </p>
+              <Badge variant="secondary" class="font-mono">{{
+                sensorType.unit
+              }}</Badge>
+            </div>
+            <div class="space-y-1">
+              <p
+                class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+              >
+                ID Systemowe
+              </p>
+              <code class="text-xs bg-muted px-1 py-0.5 rounded">{{
+                sensorType.id
+              }}</code>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Zakres i Opis</CardTitle>
+          <CardTitle>Zakresy pracy</CardTitle>
         </CardHeader>
-        <CardContent class="space-y-4">
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div class="text-muted-foreground">Zakres Min</div>
-            <div class="font-medium">
-              {{ sensorType.min_value ?? "Brak" }} {{ sensorType.unit }}
-            </div>
-
-            <div class="text-muted-foreground">Zakres Max</div>
-            <div class="font-medium">
-              {{ sensorType.max_value ?? "Brak" }} {{ sensorType.unit }}
-            </div>
+        <CardContent class="space-y-6">
+          <div class="flex justify-between items-center border-b pb-2">
+            <span class="text-sm text-muted-foreground">Minimum</span>
+            <span class="font-bold text-lg">
+              {{ sensorType.min_value ?? "—" }}
+              <small class="text-muted-foreground font-normal">{{
+                sensorType.unit
+              }}</small>
+            </span>
           </div>
-
-          <div class="pt-4">
-            <div class="text-muted-foreground text-sm mb-1">Opis</div>
-            <p class="text-sm">{{ sensorType.description || "Brak opisu." }}</p>
+          <div class="flex justify-between items-center border-b pb-2">
+            <span class="text-sm text-muted-foreground">Maximum</span>
+            <span class="font-bold text-lg">
+              {{ sensorType.max_value ?? "—" }}
+              <small class="text-muted-foreground font-normal">{{
+                sensorType.unit
+              }}</small>
+            </span>
+          </div>
+          <div class="pt-2">
+            <p class="text-xs font-medium text-muted-foreground uppercase mb-2">
+              Opis urządzenia
+            </p>
+            <p class="text-sm leading-relaxed text-balance italic">
+              "{{
+                sensorType.description || "Brak opisu dla tego typu sensora."
+              }}"
+            </p>
           </div>
         </CardContent>
       </Card>
+    </div>
+
+    <div v-else-if="isLoading" class="grid gap-6 md:grid-cols-2">
+      <Card v-for="i in 2" :key="i" class="h-48 animate-pulse bg-muted/50" />
     </div>
 
     <EditSensorType
