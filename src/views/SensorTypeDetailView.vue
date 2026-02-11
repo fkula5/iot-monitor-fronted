@@ -8,6 +8,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-vue-next";
 import EditSensorType from "@/components/sensortypes/EditSensorType.vue";
 import { api, config, type SensorType } from "@/lib/api";
 import PageHeader from "@/components/shared/PageHeader.vue";
+import { toast } from "vue-sonner";
 
 const route = useRoute();
 const router = useRouter();
@@ -39,21 +40,32 @@ onMounted(() => {
   fetchSensorType();
 });
 
+const handleUpdate = (updatedSensorType: SensorType) => {
+  sensorType.value = updatedSensorType;
+  api
+    .put(config.endpoints.sensorType(sensorTypeId), updatedSensorType)
+    .catch(() => {
+      error.value = "Nie udało się zaktualizować typu sensora.";
+    })
+    .finally(() => {
+      isEditOpen.value = false;
+      toast.success("Typ sensora został zaktualizowany.");
+      fetchSensorType();
+    });
+};
+
 const handleDelete = () => {
   if (confirm("Czy na pewno chcesz usunąć ten typ sensora?")) {
     isLoading.value = true;
     error.value = null;
     api
       .delete(config.endpoints.sensorType(sensorTypeId))
-      .then(() => {
-        alert("Typ sensora został usunięty.");
-        router.push("/sensor-types");
-      })
       .catch(() => {
         error.value = "Nie udało się usunąć typu sensora.";
       })
       .finally(() => {
         isLoading.value = false;
+        toast.success("Typ sensora został usunięty.");
         router.push("/panel/sensor-types");
       });
   }
@@ -179,6 +191,7 @@ const handleDelete = () => {
     </div>
 
     <EditSensorType
+      v-if="sensorType"
       v-model:isOpen="isEditOpen"
       :sensorType="sensorType"
       @updateSensorType="handleUpdate"
