@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Activity,
@@ -23,11 +22,13 @@ import {
   Package,
   TrendingUp,
   TrendingDown,
-  Wifi,
-  WifiOff,
+  Trash2,
+  Pencil,
 } from "lucide-vue-next";
 import SensorDataChart from "@/components/SensorDataChart.vue";
 import PageHeader from "@/components/shared/PageHeader.vue";
+import { toast } from "vue-sonner";
+import EditSensor from "@/components/sensors/EditSensor.vue";
 
 interface Reading {
   timestamp: Date;
@@ -66,6 +67,7 @@ const readings = ref<Reading[]>([]);
 const latestReading = ref<Reading | null>(null);
 const isLoading = ref<boolean>(true);
 const error = ref<string | null>(null);
+const isEditOpen = ref(false);
 
 const ws = ref<WebSocket | null>(null);
 const isConnecting = ref<boolean>(false);
@@ -226,6 +228,43 @@ async function fetchHistory(): Promise<void> {
   }
 }
 
+const handleUpdate = (updatedSensor: Sensor) => {
+  sensor.value = updatedSensor;
+  api
+    .put(config.endpoints.sensor(sensorId.value), updatedSensor)
+    .then(() => {
+      toast.success("Sensor został zaktualizowany.");
+      fetchSensor();
+    })
+    .catch(() => {
+      error.value = "Nie udało się zaktualizować sensora.";
+      toast.error(error.value);
+    })
+    .finally(() => {
+      isEditOpen.value = false;
+    });
+};
+
+const handleDelete = () => {
+  if (
+    confirm(
+      "Czy na pewno chcesz usunąć ten sensor? Wszystkie powiązane dane zostaną utracone.",
+    )
+  ) {
+    isLoading.value = true;
+    api
+      .delete(config.endpoints.sensor(sensorId.value))
+      .then(() => {
+        toast.success("Sensor został usunięty.");
+        router.push("/panel/sensors");
+      })
+      .catch(() => {
+        toast.error("Nie udało się usunąć sensora.");
+        isLoading.value = false;
+      });
+  }
+};
+
 function connectWebSocket(): void {
   if (ws.value?.readyState === WebSocket.OPEN) return;
   if (!sensorId.value) return;
@@ -352,53 +391,49 @@ onUnmounted(() => {
       :description="`${sensor?.sensor_type.name || ''} — Dane w czasie rzeczywistym`"
     >
       <template #actions>
-        <div class="flex items-center gap-3">
-          <Button
-            @click="router.push('/panel/sensors')"
-            variant="outline"
-            size="sm"
-          >
-            <ArrowLeft class="h-4 w-4 mr-2" />
-            Powrót
+        <div class="flex flex-wrap items-center gap-3">
+          <Button variant="outline" size="sm" @click="router.back()">
+            <ArrowLeft class="mr-2 h-4 w-4" /> Powrót
           </Button>
-
-          <Badge
-            :variant="
-              connectionStatus === 'connected'
-                ? 'default'
-                : connectionStatus === 'error'
-                  ? 'destructive'
-                  : 'secondary'
-            "
-            class="px-3 py-1"
+          <div class="flex items-center gap-2">
+            <Button size="sm" @click="isEditOpen = true" :disabled="!sensor">
+              <Pencil class="mr-2 h-4 w-4" /> Edytuj
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              @click="handleDelete"
+              :disabled="!sensor"
+            >
+              <Trash2 class="mr-2 h-4 w-4" /> Usuń
+            </Button>
+          </div>
+          <div
+            class="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border mr-2"
           >
-            <component
-              :is="connectionStatus === 'connected' ? Wifi : WifiOff"
+            <div
               :class="[
-                'h-3.5 w-3.5 mr-2',
-                connectionStatus === 'connected' && 'animate-pulse',
+                'h-2 w-2 rounded-full',
+                connectionStatus === 'connected'
+                  ? 'bg-green-500 animate-pulse'
+                  : 'bg-red-500',
               ]"
             />
-            {{
-              connectionStatus === "connected"
-                ? "Połączono"
-                : connectionStatus === "error"
-                  ? "Błąd"
-                  : "Rozłączono"
-            }}
-          </Badge>
-
-          <Button
-            @click="manualReconnect"
-            variant="outline"
-            size="sm"
-            :disabled="isConnecting || connectionStatus === 'connected'"
-          >
-            <RefreshCw
-              :class="['h-4 w-4 mr-2', isConnecting && 'animate-spin']"
-            />
-            Połącz ponownie
-          </Button>
+            <span
+              class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+            >
+              {{ connectionStatus === "connected" ? "Live" : "Offline" }}
+            </span>
+            <Button
+              @click="manualReconnect"
+              variant="ghost"
+              size="icon"
+              class="h-6 w-6 ml-1"
+              :disabled="isConnecting || connectionStatus === 'connected'"
+            >
+              <RefreshCw :class="['h-3 w-3', isConnecting && 'animate-spin']" />
+            </Button>
+          </div>
         </div>
       </template>
     </PageHeader>
@@ -641,5 +676,11 @@ onUnmounted(() => {
         </Card>
       </div>
     </div>
+    <EditSensor
+      v-if="sensor"
+      v-model:isOpen="isEditOpen"
+      :sensor="sensor"
+      @updateSensor="handleUpdate"
+    />
   </div>
 </template>

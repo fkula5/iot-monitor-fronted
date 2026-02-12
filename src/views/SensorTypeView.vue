@@ -16,6 +16,7 @@ import AddSensorType from "@/components/AddSensorType.vue";
 import SearchFilterBar from "@/components/shared/SearchFilterBar.vue";
 import EditSensorType from "@/components/sensortypes/EditSensorType.vue";
 import EmptyState from "@/components/shared/EmptyState.vue";
+import { toast } from "vue-sonner";
 
 const sensorTypes = ref<SensorType[]>([]);
 const isLoading = ref(true);
@@ -62,6 +63,7 @@ async function handleAddSensorType(newSensorType: { name: string }) {
         ? err.message
         : "Nie udało się dodać nowego typu sensora.";
   } finally {
+    toast.success("Nowy typ sensora został dodany!");
     isLoading.value = false;
   }
 }
@@ -83,8 +85,8 @@ async function handlerEditSensorType(updatedData: SensorType) {
       err instanceof ApiError
         ? err.message
         : "Nie udało się zaktualizować typu sensora.";
-    console.error("Error updating sensor type:", err);
   } finally {
+    toast.success("Typ sensora został zaktualizowany!");
     isLoading.value = false;
   }
 }
@@ -107,6 +109,7 @@ async function handleDeleteSensorType(id: number) {
         : "Nie udało się usunąć typu sensora.";
   } finally {
     isLoading.value = false;
+    toast.success("Typ sensora został usunięty!");
   }
 }
 

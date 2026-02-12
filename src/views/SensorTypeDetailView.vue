@@ -85,6 +85,9 @@ const handleDelete = () => {
           <Button variant="outline" size="sm" @click="router.back()">
             <ArrowLeft class="mr-2 h-4 w-4" /> Powrót
           </Button>
+          <Button size="sm" @click="isEditOpen = true" :disabled="!sensorType">
+            <Pencil class="mr-2 h-4 w-4" /> Edytuj
+          </Button>
           <Button
             variant="destructive"
             size="sm"
@@ -92,9 +95,6 @@ const handleDelete = () => {
             :disabled="!sensorType"
           >
             <Trash2 class="mr-2 h-4 w-4" /> Usuń
-          </Button>
-          <Button size="sm" @click="isEditOpen = true" :disabled="!sensorType">
-            <Pencil class="mr-2 h-4 w-4" /> Edytuj
           </Button>
         </div>
       </template>
