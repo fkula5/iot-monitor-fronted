@@ -26,6 +26,12 @@ interface EditSensorProps {
   sensor: Sensor;
 }
 
+const props = defineProps<EditSensorProps>();
+const emit = defineEmits<{
+  (e: "update:isOpen", value: boolean): void;
+  (e: "updateSensor", sensor: Sensor): void;
+}>();
+
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const sensorTypes = ref<SensorType[]>([]);
@@ -35,6 +41,7 @@ async function fetchSensorTypes() {
     isLoading.value = true;
     const data = await api.get<SensorType[]>(config.endpoints.sensorTypes);
     sensorTypes.value = data || [];
+    console.log(sensorTypes.value);
   } catch (err: any) {
     error.value = err.message || "Nie udało się pobrać typów sensorów.";
   } finally {
@@ -42,15 +49,9 @@ async function fetchSensorTypes() {
   }
 }
 
-const props = defineProps<EditSensorProps>();
-const emit = defineEmits<{
-  (e: "update:isOpen", value: boolean): void;
-  (e: "updateSensor", sensor: Sensor): void;
-}>();
-
 const formData = ref({
   name: "",
-  type: "",
+  type: 0,
   location: "",
   description: "",
 });
@@ -61,7 +62,7 @@ watch(
     if (newSensor) {
       formData.value = {
         name: newSensor.name,
-        type: newSensor.sensor_type_id.toString(),
+        type: newSensor.sensor_type.id ?? 0,
         location: newSensor.location || "",
         description: newSensor.description || "",
       };
@@ -74,7 +75,7 @@ function handleSubmit() {
   const updatedSensor: Sensor = {
     ...props.sensor,
     name: formData.value.name,
-    sensor_type_id: parseInt(formData.value.type),
+    sensor_type_id: formData.value.type,
     location: formData.value.location,
     description: formData.value.description,
   };
@@ -123,7 +124,7 @@ onMounted(fetchSensorTypes);
                   :key="type.id"
                   :value="type.id"
                 >
-                  {{ type.name }}
+                  {{ type.name }} ({{ type.model }})
                 </SelectItem>
               </SelectContent>
             </Select>

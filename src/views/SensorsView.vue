@@ -46,6 +46,11 @@ async function fetchSensors() {
   }
 }
 
+function openEditDialog(sensor: Sensor) {
+  selectedSensor.value = sensor;
+  isEditSensorDialogOpen.value = true;
+}
+
 async function handleAddSensor(newSensor: NewSensor) {
   isLoading.value = true;
   error.value = null;
@@ -67,20 +72,20 @@ async function handleAddSensor(newSensor: NewSensor) {
 async function handleUpdateSensor(updatedSensor: Sensor) {
   isLoading.value = true;
   error.value = null;
-  selectedSensor.value = null;
 
   try {
     await api.put(
       `${config.endpoints.sensors}/${updatedSensor.id}`,
       updatedSensor,
     );
+    isEditSensorDialogOpen.value = false;
+    selectedSensor.value = null;
+    toast.success("Sensor został zaktualizowany pomyślnie!");
     await fetchSensors();
   } catch (err: any) {
     toast.error(err.message || "Błąd podczas aktualizacji");
   } finally {
     isLoading.value = false;
-    isEditSensorDialogOpen.value = false;
-    toast.success("Sensor został zaktualizowany pomyślnie!");
   }
 }
 
@@ -97,11 +102,6 @@ async function handleDeleteSensor(id: number) {
   } finally {
     isLoading.value = false;
   }
-}
-
-function openEditDialog(sensor: Sensor) {
-  selectedSensor.value = sensor;
-  isEditSensorDialogOpen.value = true;
 }
 
 onMounted(fetchSensors);
