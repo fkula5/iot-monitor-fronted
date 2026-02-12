@@ -6,14 +6,13 @@ interface Props {
   count?: number;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   type: "card",
   count: 4,
 });
 </script>
 
 <template>
-  <!-- Stats Loading -->
   <div v-if="type === 'stats'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
     <Card v-for="i in count" :key="i" class="animate-pulse">
       <CardHeader class="pb-3">
@@ -26,7 +25,6 @@ const props = withDefaults(defineProps<Props>(), {
     </Card>
   </div>
 
-  <!-- Card Grid Loading -->
   <div
     v-else-if="type === 'card'"
     class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
@@ -38,7 +36,6 @@ const props = withDefaults(defineProps<Props>(), {
     ></div>
   </div>
 
-  <!-- Table Loading -->
   <div v-else-if="type === 'table'" class="space-y-3">
     <div
       v-for="i in count"

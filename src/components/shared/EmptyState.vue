@@ -17,7 +17,7 @@ interface Props {
   showCard?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   showCard: true,
 });
 

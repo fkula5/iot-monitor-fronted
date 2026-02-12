@@ -12,7 +12,7 @@ interface Props {
   addLabel?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   placeholder: "Szukaj...",
   isLoading: false,
   showRefresh: true,

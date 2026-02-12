@@ -11,7 +11,7 @@ interface Props {
   valueColor?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   iconColor: "bg-blue-50 text-blue-600",
   valueColor: "text-gray-900",
 });
