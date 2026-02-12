@@ -80,13 +80,14 @@ export function getAuthHeaders(): HeadersInit {
 }
 
 export class ApiError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-    public data?: any,
-  ) {
+  public status: number;
+  public data?: any;
+
+  constructor(status: number, message: string, data?: any) {
     super(message);
     this.name = "ApiError";
+    this.status = status;
+    this.data = data;
   }
 }
 
@@ -182,13 +183,21 @@ export class WebSocketClient {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
 
+  private endpoint: string;
+  private onMessage: (data: any) => void;
+  private onStatusChange: (
+    status: "connected" | "disconnected" | "error",
+  ) => void;
+
   constructor(
-    private endpoint: string,
-    private onMessage: (data: any) => void,
-    private onStatusChange: (
-      status: "connected" | "disconnected" | "error",
-    ) => void,
-  ) {}
+    endpoint: string,
+    onMessage: (data: any) => void,
+    onStatusChange: (status: "connected" | "disconnected" | "error") => void,
+  ) {
+    this.endpoint = endpoint;
+    this.onMessage = onMessage;
+    this.onStatusChange = onStatusChange;
+  }
 
   connect() {
     if (this.ws?.readyState === WebSocket.OPEN) return;
@@ -282,26 +291,6 @@ export interface AuthResponse {
     first_name: string;
     last_name: string;
   };
-}
-
-export interface Sensor {
-  id: number;
-  name: string;
-  location: string | null;
-  description: string | null;
-  active: boolean;
-  sensor_type_id: number;
-  sensor_type: {
-    id: number;
-    name: string;
-    unit: string;
-    min_value: number;
-    max_value: number;
-    model?: string;
-    manufacturer?: string;
-  };
-  created_at: string;
-  updated_at: string;
 }
 
 export interface SensorReading {
