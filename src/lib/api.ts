@@ -1,5 +1,10 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
-const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
+const isSecure = window.location.protocol === "https:";
+const currentHost = window.location.host;
+
+const API_URL =
+  import.meta.env.VITE_API_URL || `${window.location.protocol}//${currentHost}`;
+const WS_URL =
+  import.meta.env.VITE_WS_URL || `${isSecure ? "wss:" : "ws:"}//${currentHost}`;
 
 export const config = {
   apiUrl: API_URL,
