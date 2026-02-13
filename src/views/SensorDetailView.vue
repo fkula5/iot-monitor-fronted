@@ -180,26 +180,12 @@ async function fetchHistory(): Promise<void> {
       limit: MAX_READINGS.toString(),
     });
 
-    const response = await fetch(
-      `http://localhost:8080/api/data/sensors/${
-        sensorId.value
-      }/latest?${params.toString()}`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-
-    if (!response.ok) {
-      console.error("History fetch failed:", response.status);
-      return;
-    }
-
-    const data = await response.json();
+    const endpoint = `${config.endpoints.sensorLatest(sensorId.value)}?${params.toString()}`;
+    const data = await api.get(endpoint);
 
     const items: ReadingUpdate[] = Array.isArray(data)
       ? data
-      : data.readings || [];
+      : (data as { readings?: ReadingUpdate[] }).readings || [];
     const formattedReadings: Reading[] = items
       .map((item: ReadingUpdate): Reading | null => {
         const timestamp = parseTimestamp(item.timestamp);
@@ -277,7 +263,7 @@ function connectWebSocket(): void {
   connectionStatus.value = "disconnected";
 
   try {
-    const wsUrl = `ws://localhost:8080/api/data/ws/readings?sensor_ids=${sensorId.value}`;
+    const wsUrl = `${config.wsUrl}${config.endpoints.wsReadings([sensorId.value])}`;
     ws.value = new WebSocket(wsUrl);
 
     ws.value.onopen = () => {
