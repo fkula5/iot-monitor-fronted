@@ -29,7 +29,7 @@ import SensorDataChart from "@/components/SensorDataChart.vue";
 import PageHeader from "@/components/shared/PageHeader.vue";
 import { toast } from "vue-sonner";
 import EditSensor from "@/components/sensors/EditSensor.vue";
-
+import StatCard from "@/components/shared/StatCard.vue";
 interface Reading {
   timestamp: Date;
   value: number;
@@ -443,121 +443,47 @@ onUnmounted(() => {
 
     <div v-else-if="sensor" class="space-y-6">
       <div class="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent class="pt-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted-foreground">Aktualny odczyt</p>
-                <div class="flex items-baseline gap-2 mt-1">
-                  <p class="text-3xl font-bold">
-                    {{ latestReading ? latestReading.value.toFixed(2) : "---" }}
-                  </p>
-                  <span class="text-lg text-muted-foreground">
-                    {{ sensor.sensor_type.unit }}
-                  </span>
-                </div>
-                <p
-                  v-if="latestReading"
-                  class="text-xs text-muted-foreground mt-1"
-                >
-                  {{ formatRelativeTime(latestReading.timestamp) }}
-                </p>
-              </div>
-              <div
-                :class="[
-                  'p-3 rounded-lg',
-                  isValueInRange
-                    ? 'bg-green-100 dark:bg-green-900/30'
-                    : 'bg-red-100 dark:bg-red-900/30',
-                ]"
-              >
-                <Activity
-                  :class="[
-                    'h-6 w-6',
-                    isValueInRange ? 'text-green-600' : 'text-red-600',
-                  ]"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Aktualny odczyt"
+          :value="latestReading ? latestReading.value.toFixed(2) : '---'"
+          :icon="Activity"
+          :description="
+            latestReading ? formatRelativeTime(latestReading.timestamp) : '---'
+          "
+          :icon-color="
+            isValueInRange
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-600'
+              : 'bg-red-100 dark:bg-red-900/30 text-red-600'
+          "
+        />
 
-        <Card>
-          <CardContent class="pt-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted-foreground">Średnia (ostatnie)</p>
-                <div class="flex items-baseline gap-2 mt-1">
-                  <p class="text-3xl font-bold">
-                    {{ readingStats?.avg || "---" }}
-                  </p>
-                  <span class="text-lg text-muted-foreground">
-                    {{ sensor.sensor_type.unit }}
-                  </span>
-                </div>
-              </div>
-              <div class="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Activity class="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Średnia (ostatnie)"
+          :value="(readingStats?.avg || '---') + ' ' + sensor.sensor_type.unit"
+          :icon="Activity"
+          icon-color="bg-blue-100 dark:bg-blue-900/30 text-blue-600"
+        />
 
-        <Card>
-          <CardContent class="pt-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted-foreground">Zakres min / max</p>
-                <div class="flex items-baseline gap-2 mt-1">
-                  <p class="text-2xl font-bold">
-                    {{ readingStats?.min || "---" }} /
-                    {{ readingStats?.max || "---" }}
-                  </p>
-                  <span class="text-sm text-muted-foreground ml-1">
-                    {{ sensor.sensor_type.unit }}
-                  </span>
-                </div>
-              </div>
-              <div class="p-3 rounded-lg bg-orange-100 dark:bg-orange-900/30">
-                <TrendingUp class="h-6 w-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Zakres min / max"
+          :value="`${readingStats?.min || '---'} / ${readingStats?.max || '---'} ${sensor.sensor_type.unit}`"
+          :icon="TrendingUp"
+          icon-color="bg-orange-100 dark:bg-orange-900/30 text-orange-600"
+        />
 
-        <Card>
-          <CardContent class="pt-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted-foreground">Liczba odczytów</p>
-                <div class="flex items-baseline gap-2 mt-1">
-                  <p class="text-3xl font-bold">
-                    {{ readingStats?.count || 0 }}
-                  </p>
-                </div>
-                <p
-                  v-if="readingStats?.trend && readingStats.trend !== 'stable'"
-                  class="text-xs text-muted-foreground mt-1"
-                >
-                  Trend:
-                  {{ readingStats.trend === "up" ? "Rosnący" : "Malejący" }}
-                </p>
-              </div>
-              <div class="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <component
-                  :is="
-                    readingStats?.trend === 'up'
-                      ? TrendingUp
-                      : readingStats?.trend === 'down'
-                        ? TrendingDown
-                        : Clock
-                  "
-                  class="h-6 w-6 text-purple-600"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Liczba odczytów"
+          :value="readingStats?.count || 0"
+          :icon="
+            readingStats?.trend === 'up'
+              ? TrendingUp
+              : readingStats?.trend === 'down'
+                ? TrendingDown
+                : Clock
+          "
+          icon-color="bg-purple-100 dark:bg-purple-900/30 text-purple-600"
+          :description="`Trend: ${readingStats?.trend === 'up' ? 'Rosnący' : 'Malejący'}`"
+        />
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
