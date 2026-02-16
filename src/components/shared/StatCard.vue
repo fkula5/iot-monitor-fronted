@@ -19,10 +19,7 @@ withDefaults(defineProps<Props>(), {
 
 <template>
   <Card class="hover:shadow-md transition-shadow">
-    <CardHeader
-      class="flex flex-row items-center justify-between pb-2"
-      v-if="title"
-    >
+    <CardHeader class="flex flex-row items-center justify-between" v-if="title">
       <CardTitle class="text-sm font-medium text-gray-600">
         {{ title }}
       </CardTitle>
