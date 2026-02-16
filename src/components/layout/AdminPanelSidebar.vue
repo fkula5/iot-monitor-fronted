@@ -7,6 +7,7 @@ import {
   Gauge,
   Folder,
   RadioReceiver,
+  UserRoundCog,
 } from "lucide-vue-next";
 </script>
 
@@ -79,21 +80,20 @@ import {
               3
             </span>
           </RouterLink>
+
+          <RouterLink
+            to="/panel/settings"
+            active-class="bg-blue-50 text-blue-700"
+            v-slot="{ isActive }"
+            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 transition-all hover:bg-gray-100"
+          >
+            <UserRoundCog :class="['h-4 w-4', isActive && 'text-blue-700']" />
+            <span :class="[isActive && 'font-semibold']">Ustawienia konta</span>
+          </RouterLink>
         </nav>
       </div>
 
       <div class="border-t p-4">
-        <div class="flex items-center gap-3 rounded-lg px-3 py-2 bg-gray-50">
-          <div
-            class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center"
-          >
-            <span class="text-white text-sm font-medium">U</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-gray-900 truncate">User</p>
-            <p class="text-xs text-gray-500 truncate">user@example.com</p>
-          </div>
-        </div>
         <p class="text-xs text-gray-500 text-center mt-4">IoT Monitor v1.0.0</p>
       </div>
     </div>

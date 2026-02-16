@@ -11,10 +11,10 @@ import CardHeader from "@/components/ui/card/CardHeader.vue";
 import CardTitle from "@/components/ui/card/CardTitle.vue";
 import CardContent from "@/components/ui/card/CardContent.vue";
 import LoadingSkeleton from "@/components/shared/LoadingSkeleton.vue";
-import SensorTypesTable from "@/components/sensortypes/SensorTypesTable.vue";
-import AddSensorType from "@/components/AddSensorType.vue";
+import SensorTypesTable from "@/components/sensortype/SensorTypesTable.vue";
+import AddSensorType from "@/components/sensortype/AddSensorType.vue";
 import SearchFilterBar from "@/components/shared/SearchFilterBar.vue";
-import EditSensorType from "@/components/sensortypes/EditSensorType.vue";
+import EditSensorType from "@/components/sensortype/EditSensorType.vue";
 import EmptyState from "@/components/shared/EmptyState.vue";
 import { toast } from "vue-sonner";
 

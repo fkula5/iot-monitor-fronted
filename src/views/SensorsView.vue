@@ -11,12 +11,12 @@ import StatCard from "@/components/shared/StatCard.vue";
 import LoadingSkeleton from "@/components/shared/LoadingSkeleton.vue";
 import EmptyState from "@/components/shared/EmptyState.vue";
 import SearchFilterBar from "@/components/shared/SearchFilterBar.vue";
-import SensorsTable from "@/components/sensors/SensorsTable.vue";
-import AddSensor from "@/components/AddSensor.vue";
+import SensorsTable from "@/components/sensor/SensorsTable.vue";
+import AddSensor from "@/components/sensor/AddSensor.vue";
 
-import type { NewSensor } from "@/components/AddSensor.vue";
+import type { NewSensor } from "@/components/sensor/AddSensor.vue";
 import { toast } from "vue-sonner";
-import EditSensor from "@/components/sensors/EditSensor.vue";
+import EditSensor from "@/components/sensor/EditSensor.vue";
 
 const router = useRouter();
 const sensors = ref<Sensor[]>([]);

@@ -5,7 +5,10 @@ import {
   Bell,
   CircleUser,
   LayoutDashboard,
+  LogOut,
   Menu,
+  Settings,
+  User,
 } from "lucide-vue-next";
 
 import { Button } from "@/components/ui/button";
@@ -107,16 +110,33 @@ function handleLogout() {
           <span class="sr-only">Toggle user menu</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{{
-          user.first_name || "Moje Konto"
-        }}</DropdownMenuLabel>
+      <DropdownMenuContent align="start" class="w-56">
+        <DropdownMenuLabel class="font-normal">
+          <div class="flex flex-col space-y-1">
+            <p class="text-sm font-medium leading-none">
+              {{ user.first_name }}
+            </p>
+            <p class="text-xs leading-none text-muted-foreground">
+              {{ user.email }}
+            </p>
+          </div>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Ustawienia</DropdownMenuItem>
-        <DropdownMenuItem>Pomoc</DropdownMenuItem>
+        <DropdownMenuItem @click="router.push('/panel/settings')">
+          <User class="mr-2 h-4 w-4" />
+          <span>Profil</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem @click="router.push('/panel/settings')">
+          <Settings class="mr-2 h-4 w-4" />
+          <span>Ustawienia</span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem @click="handleLogout" class="text-red-600">
-          Wyloguj
+        <DropdownMenuItem
+          @click="handleLogout"
+          class="text-red-600 focus:text-red-600"
+        >
+          <LogOut class="mr-2 h-4 w-4" />
+          <span>Wyloguj się</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
