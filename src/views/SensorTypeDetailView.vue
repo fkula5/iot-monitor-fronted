@@ -60,12 +60,14 @@ const handleDelete = () => {
     error.value = null;
     api
       .delete(config.endpoints.sensorType(sensorTypeId))
+      .then(() => {
+        toast.success("Typ sensora został usunięty.");
+      })
       .catch(() => {
         error.value = "Nie udało się usunąć typu sensora.";
       })
       .finally(() => {
         isLoading.value = false;
-        toast.success("Typ sensora został usunięty.");
         router.push("/panel/sensor-types");
       });
   }
