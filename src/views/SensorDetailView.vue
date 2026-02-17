@@ -31,6 +31,8 @@ import { toast } from "vue-sonner";
 import EditSensor from "@/components/sensor/EditSensor.vue";
 import StatCard from "@/components/shared/StatCard.vue";
 import {
+  MAX_CHART_READINGS,
+  MAX_WS_RECONNECT_ATTEMPTS,
   TREND_MIN_READINGS,
   TREND_THRESHOLD_RATIO,
   TREND_WINDOW_SIZE,
@@ -79,8 +81,6 @@ const ws = ref<WebSocket | null>(null);
 const isConnecting = ref<boolean>(false);
 const connectionStatus = ref<ConnectionStatus>("disconnected");
 const reconnectAttempts = ref<number>(0);
-const MAX_RECONNECT_ATTEMPTS = 5;
-const MAX_READINGS = 50;
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleString("pl-PL", {
@@ -169,7 +169,7 @@ async function fetchHistory(): Promise<void> {
 
   try {
     const params = new URLSearchParams({
-      limit: MAX_READINGS.toString(),
+      limit: MAX_CHART_READINGS.toString(),
     });
 
     const endpoint = `${config.endpoints.sensorLatest(sensorId.value)}?${params.toString()}`;
@@ -246,7 +246,7 @@ const handleDelete = () => {
 function connectWebSocket(): void {
   if (ws.value?.readyState === WebSocket.OPEN) return;
   if (!sensorId.value) return;
-  if (reconnectAttempts.value >= MAX_RECONNECT_ATTEMPTS) {
+  if (reconnectAttempts.value >= MAX_WS_RECONNECT_ATTEMPTS) {
     error.value = "Przekroczono maksymalną liczbę prób połączenia";
     return;
   }
@@ -283,7 +283,7 @@ function connectWebSocket(): void {
           latestReading.value = reading;
           readings.value.push(reading);
 
-          if (readings.value.length > MAX_READINGS) {
+          if (readings.value.length > MAX_CHART_READINGS) {
             readings.value.shift();
           }
         }
@@ -303,14 +303,14 @@ function connectWebSocket(): void {
       connectionStatus.value = "disconnected";
       isConnecting.value = false;
 
-      if (reconnectAttempts.value < MAX_RECONNECT_ATTEMPTS && sensor.value) {
+      if (reconnectAttempts.value < MAX_WS_RECONNECT_ATTEMPTS && sensor.value) {
         reconnectAttempts.value++;
         const delay = Math.min(
           1000 * Math.pow(2, reconnectAttempts.value),
           30000,
         );
         console.log(
-          `Reconnecting in ${delay}ms (attempt ${reconnectAttempts.value}/${MAX_RECONNECT_ATTEMPTS})`,
+          `Reconnecting in ${delay}ms (attempt ${reconnectAttempts.value}/${MAX_WS_RECONNECT_ATTEMPTS})`,
         );
 
         setTimeout(() => {
@@ -551,7 +551,7 @@ onUnmounted(() => {
           <CardHeader>
             <CardTitle>Wykres w czasie rzeczywistym</CardTitle>
             <CardDescription>
-              Ostatnie {{ MAX_READINGS }} odczytów
+              Ostatnie {{ MAX_CHART_READINGS }} odczytów
               <span v-if="readingStats" class="ml-2">
                 ({{ readingStats.count }} wartości)
               </span>
