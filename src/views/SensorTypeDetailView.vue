@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-vue-next";
-import EditSensorType from "@/components/sensortypes/EditSensorType.vue";
+import EditSensorType from "@/components/sensortype/EditSensorType.vue";
 import { api, config, type SensorType } from "@/lib/api";
 import PageHeader from "@/components/shared/PageHeader.vue";
 import { toast } from "vue-sonner";

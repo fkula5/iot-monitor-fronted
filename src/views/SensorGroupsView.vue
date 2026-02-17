@@ -23,9 +23,9 @@ import {
   Folder,
   Eye,
 } from "lucide-vue-next";
-import SensorGroupDialog from "@/components/SensorGroupDialog.vue";
 import PageHeader from "@/components/shared/PageHeader.vue";
 import StatCard from "@/components/shared/StatCard.vue";
+import SensorGroupDialog from "@/components/sensorgroup/SensorGroupDialog.vue";
 
 const groups = ref<SensorGroup[]>([]);
 const sensors = ref<Sensor[]>([]);

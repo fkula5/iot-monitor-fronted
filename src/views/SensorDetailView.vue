@@ -25,10 +25,10 @@ import {
   Trash2,
   Pencil,
 } from "lucide-vue-next";
-import SensorDataChart from "@/components/SensorDataChart.vue";
+import SensorDataChart from "@/components/sensor/SensorDataChart.vue";
 import PageHeader from "@/components/shared/PageHeader.vue";
 import { toast } from "vue-sonner";
-import EditSensor from "@/components/sensors/EditSensor.vue";
+import EditSensor from "@/components/sensor/EditSensor.vue";
 import StatCard from "@/components/shared/StatCard.vue";
 interface Reading {
   timestamp: Date;
