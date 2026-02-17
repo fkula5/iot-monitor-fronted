@@ -41,7 +41,7 @@ const router = createRouter({
         },
         {
           path: "sensor-types",
-          name: "Typy sesnorów",
+          name: "Typy sensorów",
           component: SensorTypeView,
         },
         {
