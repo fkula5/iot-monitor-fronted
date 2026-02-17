@@ -33,7 +33,7 @@ const isLoading = ref(false);
 async function getUser() {
   try {
     const response = await api.get<UserInfo>(config.endpoints.user);
-    const userData = response || response;
+    const userData = response;
 
     profileForm.value = {
       first_name: userData.first_name || "",

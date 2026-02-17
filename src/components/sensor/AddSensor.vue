@@ -56,7 +56,7 @@ const emit = defineEmits<{
 
 const formData = ref({
   name: "",
-  type: "",
+  type: 0,
   location: "",
   description: "",
 });
@@ -64,7 +64,7 @@ const formData = ref({
 const resetForm = () => {
   formData.value = {
     name: "",
-    type: "",
+    type: 0,
     location: "",
     description: "",
   };

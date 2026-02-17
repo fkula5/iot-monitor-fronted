@@ -30,6 +30,14 @@ import PageHeader from "@/components/shared/PageHeader.vue";
 import { toast } from "vue-sonner";
 import EditSensor from "@/components/sensor/EditSensor.vue";
 import StatCard from "@/components/shared/StatCard.vue";
+import {
+  MAX_CHART_READINGS,
+  MAX_WS_RECONNECT_ATTEMPTS,
+  TREND_MIN_READINGS,
+  TREND_THRESHOLD_RATIO,
+  TREND_WINDOW_SIZE,
+} from "@/lib/constants";
+import { parseTimestamp } from "@/lib/utils";
 interface Reading {
   timestamp: Date;
   value: number;
@@ -73,25 +81,6 @@ const ws = ref<WebSocket | null>(null);
 const isConnecting = ref<boolean>(false);
 const connectionStatus = ref<ConnectionStatus>("disconnected");
 const reconnectAttempts = ref<number>(0);
-const MAX_RECONNECT_ATTEMPTS = 5;
-const MAX_READINGS = 50;
-
-function parseTimestamp(input: any): Date {
-  if (!input) return new Date(NaN);
-
-  if (typeof input === "object" && "seconds" in input) {
-    const ms =
-      Number(input.seconds) * 1000 + Number(input.nanos || 0) / 1000000;
-    return new Date(ms);
-  }
-
-  const num = Number(input);
-  if (!isNaN(num)) {
-    return num < 10000000000 ? new Date(num * 1000) : new Date(num);
-  }
-
-  return new Date(input);
-}
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleString("pl-PL", {
@@ -126,13 +115,16 @@ const readingStats = computed<ReadingStats | null>(() => {
   const avg = values.reduce((a, b) => a + b, 0) / values.length;
   let trend: Trend = "stable";
 
-  if (readings.value.length >= 20) {
-    const recent = readings.value.slice(-10);
-    const previous = readings.value.slice(-20, -10);
+  if (readings.value.length >= TREND_MIN_READINGS) {
+    const recent = readings.value.slice(-TREND_WINDOW_SIZE);
+    const previous = readings.value.slice(
+      -TREND_MIN_READINGS,
+      -TREND_WINDOW_SIZE,
+    );
     const recentAvg = recent.reduce((a, b) => a + b.value, 0) / recent.length;
     const prevAvg = previous.reduce((a, b) => a + b.value, 0) / previous.length;
     const diff = recentAvg - prevAvg;
-    if (Math.abs(diff) > (max - min) * 0.05) {
+    if (Math.abs(diff) > (max - min) * TREND_THRESHOLD_RATIO) {
       trend = diff > 0 ? "up" : "down";
     }
   }
@@ -177,7 +169,7 @@ async function fetchHistory(): Promise<void> {
 
   try {
     const params = new URLSearchParams({
-      limit: MAX_READINGS.toString(),
+      limit: MAX_CHART_READINGS.toString(),
     });
 
     const endpoint = `${config.endpoints.sensorLatest(sensorId.value)}?${params.toString()}`;
@@ -254,7 +246,7 @@ const handleDelete = () => {
 function connectWebSocket(): void {
   if (ws.value?.readyState === WebSocket.OPEN) return;
   if (!sensorId.value) return;
-  if (reconnectAttempts.value >= MAX_RECONNECT_ATTEMPTS) {
+  if (reconnectAttempts.value >= MAX_WS_RECONNECT_ATTEMPTS) {
     error.value = "Przekroczono maksymalną liczbę prób połączenia";
     return;
   }
@@ -291,7 +283,7 @@ function connectWebSocket(): void {
           latestReading.value = reading;
           readings.value.push(reading);
 
-          if (readings.value.length > MAX_READINGS) {
+          if (readings.value.length > MAX_CHART_READINGS) {
             readings.value.shift();
           }
         }
@@ -311,14 +303,14 @@ function connectWebSocket(): void {
       connectionStatus.value = "disconnected";
       isConnecting.value = false;
 
-      if (reconnectAttempts.value < MAX_RECONNECT_ATTEMPTS && sensor.value) {
+      if (reconnectAttempts.value < MAX_WS_RECONNECT_ATTEMPTS && sensor.value) {
         reconnectAttempts.value++;
         const delay = Math.min(
           1000 * Math.pow(2, reconnectAttempts.value),
           30000,
         );
         console.log(
-          `Reconnecting in ${delay}ms (attempt ${reconnectAttempts.value}/${MAX_RECONNECT_ATTEMPTS})`,
+          `Reconnecting in ${delay}ms (attempt ${reconnectAttempts.value}/${MAX_WS_RECONNECT_ATTEMPTS})`,
         );
 
         setTimeout(() => {
@@ -559,7 +551,7 @@ onUnmounted(() => {
           <CardHeader>
             <CardTitle>Wykres w czasie rzeczywistym</CardTitle>
             <CardDescription>
-              Ostatnie {{ MAX_READINGS }} odczytów
+              Ostatnie {{ MAX_CHART_READINGS }} odczytów
               <span v-if="readingStats" class="ml-2">
                 ({{ readingStats.count }} wartości)
               </span>

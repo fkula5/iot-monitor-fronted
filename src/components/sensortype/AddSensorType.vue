@@ -21,6 +21,7 @@ import {
   SelectLabel,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { UNIT_CATEGORIES } from "@/lib/constants";
 
 export interface NewSensorType {
   name: string;
@@ -51,41 +52,6 @@ const formData = ref({
   min_value: undefined as number | undefined,
   max_value: undefined as number | undefined,
 });
-
-const unitCategories = [
-  {
-    label: "Temperatura",
-    units: ["°C", "°F", "K"],
-  },
-  {
-    label: "Wilgotność / Środowisko",
-    units: ["%", "RH%", "ppm", "ppb", "AQI"],
-  },
-  {
-    label: "Elektryczność",
-    units: ["V", "mV", "kV", "A", "mA", "W", "kW", "kWh", "Hz", "Ω"],
-  },
-  {
-    label: "Ciśnienie",
-    units: ["Pa", "hPa", "kPa", "bar", "psi", "atm"],
-  },
-  {
-    label: "Odległość / Ruch",
-    units: ["m", "cm", "mm", "km", "m/s", "km/h", "rpm"],
-  },
-  {
-    label: "Światło / Dźwięk",
-    units: ["lx", "lm", "cd", "dB", "dB(A)"],
-  },
-  {
-    label: "Objętość / Przepływ",
-    units: ["l", "m³", "l/min", "m³/h"],
-  },
-  {
-    label: "Inne",
-    units: ["count", "boolean (0/1)", "hex", "raw"],
-  },
-];
 
 const resetForm = () => {
   formData.value = {
@@ -186,7 +152,7 @@ const onOpenChange = (open: boolean) => {
               </SelectTrigger>
               <SelectContent class="max-h-[200px]">
                 <SelectGroup
-                  v-for="category in unitCategories"
+                  v-for="category in UNIT_CATEGORIES"
                   :key="category.label"
                 >
                   <SelectLabel>{{ category.label }}</SelectLabel>

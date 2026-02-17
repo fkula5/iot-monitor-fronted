@@ -57,15 +57,14 @@ async function handleAddSensor(newSensor: NewSensor) {
 
   try {
     await api.post(config.endpoints.sensors, newSensor);
-
     isAddSensorDialogOpen.value = false;
+    toast.success("Sensor został dodany pomyślnie!");
     await fetchSensors();
   } catch (err: any) {
     toast.error(err.message || "Błąd podczas dodawania sensora");
     error.value = err.message || "Nie udało się dodać sensora.";
   } finally {
     isLoading.value = false;
-    toast.success("Sensor został dodany pomyślnie!");
   }
 }
 
@@ -91,7 +90,6 @@ async function handleUpdateSensor(updatedSensor: Sensor) {
 
 async function handleDeleteSensor(id: number) {
   if (!confirm("Czy na pewno chcesz usunąć ten sensor?")) return;
-
   isLoading.value = true;
   try {
     await api.delete(`${config.endpoints.sensors}/${id}`);
