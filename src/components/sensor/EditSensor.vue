@@ -93,7 +93,7 @@ onMounted(fetchSensorTypes);
 
 <template>
   <Dialog :open="isOpen" @update:open="onOpenChange">
-    <DialogContent :open="isOpen" @update:open="onOpenChange">
+    <DialogContent>
       <DialogHeader>
         <DialogTitle>Edytuj sensor</DialogTitle>
         <DialogDescription>
