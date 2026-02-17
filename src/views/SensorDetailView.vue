@@ -30,6 +30,11 @@ import PageHeader from "@/components/shared/PageHeader.vue";
 import { toast } from "vue-sonner";
 import EditSensor from "@/components/sensor/EditSensor.vue";
 import StatCard from "@/components/shared/StatCard.vue";
+import {
+  TREND_MIN_READINGS,
+  TREND_THRESHOLD_RATIO,
+  TREND_WINDOW_SIZE,
+} from "@/lib/constants";
 interface Reading {
   timestamp: Date;
   value: number;
@@ -126,13 +131,16 @@ const readingStats = computed<ReadingStats | null>(() => {
   const avg = values.reduce((a, b) => a + b, 0) / values.length;
   let trend: Trend = "stable";
 
-  if (readings.value.length >= 20) {
-    const recent = readings.value.slice(-10);
-    const previous = readings.value.slice(-20, -10);
+  if (readings.value.length >= TREND_MIN_READINGS) {
+    const recent = readings.value.slice(-TREND_WINDOW_SIZE);
+    const previous = readings.value.slice(
+      -TREND_MIN_READINGS,
+      -TREND_WINDOW_SIZE,
+    );
     const recentAvg = recent.reduce((a, b) => a + b.value, 0) / recent.length;
     const prevAvg = previous.reduce((a, b) => a + b.value, 0) / previous.length;
     const diff = recentAvg - prevAvg;
-    if (Math.abs(diff) > (max - min) * 0.05) {
+    if (Math.abs(diff) > (max - min) * TREND_THRESHOLD_RATIO) {
       trend = diff > 0 ? "up" : "down";
     }
   }
