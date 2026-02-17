@@ -35,6 +35,7 @@ import {
   TREND_THRESHOLD_RATIO,
   TREND_WINDOW_SIZE,
 } from "@/lib/constants";
+import { parseTimestamp } from "@/lib/utils";
 interface Reading {
   timestamp: Date;
   value: number;
@@ -80,23 +81,6 @@ const connectionStatus = ref<ConnectionStatus>("disconnected");
 const reconnectAttempts = ref<number>(0);
 const MAX_RECONNECT_ATTEMPTS = 5;
 const MAX_READINGS = 50;
-
-function parseTimestamp(input: any): Date {
-  if (!input) return new Date(NaN);
-
-  if (typeof input === "object" && "seconds" in input) {
-    const ms =
-      Number(input.seconds) * 1000 + Number(input.nanos || 0) / 1000000;
-    return new Date(ms);
-  }
-
-  const num = Number(input);
-  if (!isNaN(num)) {
-    return num < 10000000000 ? new Date(num * 1000) : new Date(num);
-  }
-
-  return new Date(input);
-}
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleString("pl-PL", {
