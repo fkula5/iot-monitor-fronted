@@ -44,12 +44,14 @@ const handleUpdate = (updatedSensorType: SensorType) => {
   sensorType.value = updatedSensorType;
   api
     .put(config.endpoints.sensorType(sensorTypeId), updatedSensorType)
+    .then(() => {
+      toast.success("Typ sensora został zaktualizowany.");
+    })
     .catch(() => {
       error.value = "Nie udało się zaktualizować typu sensora.";
     })
     .finally(() => {
       isEditOpen.value = false;
-      toast.success("Typ sensora został zaktualizowany.");
       fetchSensorType();
     });
 };
