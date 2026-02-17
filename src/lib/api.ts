@@ -12,6 +12,7 @@ export const config = {
   endpoints: {
     login: "/auth/login",
     register: "/auth/register",
+    user: "/auth/user",
 
     sensors: "/api/sensors",
     sensor: (id: number) => `/api/sensors/${id}`,
@@ -305,4 +306,10 @@ export interface SensorReading {
   sensor_name: string;
   location: string;
   unit: string;
+}
+
+export interface UserInfo {
+  email: string;
+  first_name: string;
+  last_name: string;
 }

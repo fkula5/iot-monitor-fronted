@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { User, Lock, Bell, Shield, Save } from "lucide-vue-next";
 import PageHeader from "@/components/shared/PageHeader.vue";
 import {
@@ -14,10 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "vue-sonner";
+import { api, config, type UserInfo } from "@/lib/api";
 
 const profileForm = ref({
-  name: "User",
-  email: "user@example.com",
+  first_name: "",
+  last_name: "",
+  email: "",
 });
 
 const passwordForm = ref({
@@ -26,8 +28,41 @@ const passwordForm = ref({
   confirm: "",
 });
 
-const handleSaveProfile = () => {
-  toast.success("Profil został zaktualizowany");
+const isLoading = ref(false);
+
+async function getUser() {
+  try {
+    const response = await api.get<UserInfo>(config.endpoints.user);
+    const userData = response || response;
+
+    profileForm.value = {
+      first_name: userData.first_name || "",
+      last_name: userData.last_name || "",
+      email: userData.email || "",
+    };
+  } catch (error) {
+    console.error("Failed to load user profile", error);
+    toast.error("Nie udało się pobrać danych profilu.");
+  }
+}
+
+const handleUpdateUser = async () => {
+  isLoading.value = true;
+  try {
+    const response = await api.put<UserInfo>(config.endpoints.user, {
+      first_name: profileForm.value.first_name,
+      last_name: profileForm.value.last_name,
+    });
+
+    localStorage.setItem("user", JSON.stringify(response));
+
+    toast.success("Profil został zaktualizowany");
+  } catch (error) {
+    console.error(error);
+    toast.error("Wystąpił błąd podczas zapisywania zmian.");
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const handleChangePassword = () => {
@@ -35,8 +70,14 @@ const handleChangePassword = () => {
     toast.error("Nowe hasła nie są identyczne");
     return;
   }
+
   toast.success("Hasło zostało zmienione");
+  passwordForm.value = { current: "", new: "", confirm: "" };
 };
+
+onMounted(() => {
+  getUser();
+});
 </script>
 
 <template>
@@ -53,27 +94,44 @@ const handleChangePassword = () => {
             <User class="h-5 w-5 text-blue-600" />
             <CardTitle>Profil użytkownika</CardTitle>
           </div>
-          <CardDescription
-            >Zaktualizuj swoje podstawowe informacje.</CardDescription
-          >
+          <CardDescription>
+            Zaktualizuj swoje podstawowe informacje.
+          </CardDescription>
         </CardHeader>
         <CardContent class="space-y-4">
-          <div class="space-y-2">
-            <Label for="name">Imię i nazwisko</Label>
-            <Input id="name" v-model="profileForm.name" />
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="space-y-2">
+              <Label for="first_name">Imię</Label>
+              <Input id="first_name" v-model="profileForm.first_name" />
+            </div>
+            <div class="space-y-2">
+              <Label for="last_name">Nazwisko</Label>
+              <Input id="last_name" v-model="profileForm.last_name" />
+            </div>
           </div>
+
           <div class="space-y-2">
             <Label for="email">Adres email</Label>
-            <Input id="email" type="email" v-model="profileForm.email" />
+            <Input
+              id="email"
+              type="email"
+              v-model="profileForm.email"
+              disabled
+              class="bg-muted text-muted-foreground opacity-100"
+            />
+            <p class="text-[0.8rem] text-muted-foreground">
+              Zmiana adresu email nie jest możliwa w tym panelu.
+            </p>
           </div>
         </CardContent>
         <CardFooter class="border-t px-6 py-4">
           <Button
-            @click="handleSaveProfile"
+            @click="handleUpdateUser"
             class="ml-auto bg-blue-600 hover:bg-blue-700"
+            :disabled="isLoading"
           >
             <Save class="mr-2 h-4 w-4" />
-            Zapisz zmiany
+            {{ isLoading ? "Zapisywanie..." : "Zapisz zmiany" }}
           </Button>
         </CardFooter>
       </Card>
@@ -84,9 +142,9 @@ const handleChangePassword = () => {
             <Lock class="h-5 w-5 text-blue-600" />
             <CardTitle>Zmiana hasła</CardTitle>
           </div>
-          <CardDescription
-            >Zadbaj o bezpieczeństwo swojego konta.</CardDescription
-          >
+          <CardDescription>
+            Zadbaj o bezpieczeństwo swojego konta.
+          </CardDescription>
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="space-y-2">
@@ -127,9 +185,9 @@ const handleChangePassword = () => {
             <Bell class="h-5 w-5 text-blue-600" />
             <CardTitle>Powiadomienia i system</CardTitle>
           </div>
-          <CardDescription
-            >Konfiguracja alertów i statusu systemu.</CardDescription
-          >
+          <CardDescription>
+            Konfiguracja alertów i statusu systemu.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div

@@ -114,7 +114,7 @@ function handleLogout() {
         <DropdownMenuLabel class="font-normal">
           <div class="flex flex-col space-y-1">
             <p class="text-sm font-medium leading-none">
-              {{ user.first_name }}
+              {{ user.first_name }} {{ user.last_name }}
             </p>
             <p class="text-xs leading-none text-muted-foreground">
               {{ user.email }}
