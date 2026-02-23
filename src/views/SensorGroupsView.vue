@@ -274,7 +274,7 @@ function formatDate(dateString: string) {
                 <div class="flex items-center justify-between text-sm">
                   <span class="text-gray-500">Sensory:</span>
                   <Badge variant="secondary">
-                    {{ group.sensor_ids?.length || 0 }}
+                    {{ group.sensor_count }}
                   </Badge>
                 </div>
                 <div

@@ -59,6 +59,7 @@ export interface SensorGroup {
   color: string;
   icon: string;
   sensor_ids: number[];
+  sensor_count?: number;
   created_at: string;
   updated_at: string;
 }

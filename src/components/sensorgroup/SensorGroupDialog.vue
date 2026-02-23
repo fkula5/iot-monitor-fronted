@@ -82,7 +82,7 @@ watch(
     } else if (!newVal) {
       setTimeout(resetForm, 300);
     }
-  }
+  },
 );
 
 watch(
@@ -92,7 +92,7 @@ watch(
       formData.value = { ...newGroup };
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 const resetForm = () => {
@@ -106,16 +106,23 @@ const resetForm = () => {
 };
 
 const toggleSensor = (sensorId: number) => {
-  const index = formData.value.sensor_ids.indexOf(sensorId);
+  const id = Number(sensorId);
+
+  if (!formData.value.sensor_ids) {
+    formData.value.sensor_ids = [];
+  }
+
+  const index = formData.value.sensor_ids.indexOf(id);
   if (index > -1) {
     formData.value.sensor_ids.splice(index, 1);
   } else {
-    formData.value.sensor_ids.push(sensorId);
+    formData.value.sensor_ids.push(id);
   }
 };
 
 const isSensorSelected = (sensorId: number) => {
-  return formData.value.sensor_ids.includes(sensorId);
+  if (!formData.value.sensor_ids) return false;
+  return formData.value.sensor_ids.includes(Number(sensorId));
 };
 
 const handleSubmit = () => {
@@ -225,21 +232,21 @@ const onOpenChange = (open: boolean) => {
               <div
                 v-for="sensor in sensors"
                 :key="sensor.id"
-                class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
+                class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                @click="toggleSensor(sensor.id)"
               >
                 <Checkbox
                   :id="`sensor-${sensor.id}`"
                   :checked="isSensorSelected(sensor.id)"
-                  @update:checked="toggleSensor(sensor.id)"
                 />
                 <Label
                   :for="`sensor-${sensor.id}`"
-                  class="flex-1 cursor-pointer"
+                  class="flex-1 cursor-pointer pointer-events-none"
                 >
                   <div>
                     <p class="font-medium">{{ sensor.name }}</p>
                     <p class="text-xs text-gray-500">
-                      {{ sensor.sensor_type.name }}
+                      {{ sensor.sensor_type?.name }}
                       <span v-if="sensor.location">
                         • {{ sensor.location }}
                       </span>
