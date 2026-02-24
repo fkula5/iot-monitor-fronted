@@ -72,11 +72,22 @@ onMounted(loadData);
 
 async function handleSaveGroup(group: any) {
   try {
+    const payload = {
+      name: group.name,
+      description: group.description,
+      color: group.color,
+      icon: group.icon,
+      sensor_ids: group.sensor_ids || [],
+    };
+
+    console.log(payload);
+
     if (group.id) {
-      await api.put(config.endpoints.sensorGroup(group.id), group);
+      await api.put(config.endpoints.sensorGroup(group.id), payload);
     } else {
-      await api.post(config.endpoints.sensorGroups, group);
+      await api.post(config.endpoints.sensorGroups, payload);
     }
+
     await fetchGroups();
     isDialogOpen.value = false;
   } catch (err: any) {

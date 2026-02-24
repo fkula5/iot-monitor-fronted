@@ -67,26 +67,15 @@ watch(
   (newVal) => {
     if (newVal) {
       if (props.group) {
-        formData.value = JSON.parse(JSON.stringify(props.group));
-        if (!formData.value.sensor_ids) formData.value.sensor_ids = [];
+        formData.value = {
+          ...props.group,
+          sensor_ids: [...(props.group.sensor_ids || [])],
+        };
       } else {
         resetForm();
       }
     }
   },
-);
-
-watch(
-  () => props.group,
-  (newGroup) => {
-    if (newGroup) {
-      formData.value = {
-        ...newGroup,
-        sensor_ids: newGroup.sensor_ids || [],
-      };
-    }
-  },
-  { deep: true },
 );
 
 const resetForm = () => {
@@ -130,7 +119,6 @@ const handleSubmit = () => {
   }
 
   emit("save", { ...formData.value });
-  emit("update:isOpen", false);
 };
 
 const onOpenChange = (open: boolean) => {
@@ -222,9 +210,10 @@ const onOpenChange = (open: boolean) => {
           <Label>
             Sensory w Grupie
             <Badge variant="secondary" class="ml-2">
-              {{ formData.sensors?.length || 0 }} wybranych
+              {{ formData.sensor_ids?.length || 0 }} wybranych
             </Badge>
           </Label>
+          {{ formData.sensor_ids }}
           <ScrollArea class="h-[200px] border rounded-md p-4">
             <div class="space-y-2">
               <div
@@ -236,7 +225,7 @@ const onOpenChange = (open: boolean) => {
                 <Checkbox
                   :id="`sensor-${sensor.id}`"
                   :checked="isSensorSelected(sensor.id)"
-                  :default-value="isSensorSelected(sensor.id)"
+                  class="pointer-events-none"
                 />
                 <Label
                   :for="`sensor-${sensor.id}`"

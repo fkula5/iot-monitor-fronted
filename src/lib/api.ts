@@ -154,9 +154,11 @@ export const api = {
     });
 
     if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
       throw new ApiError(
         response.status,
-        `PUT ${endpoint} failed: ${response.statusText}`,
+        error.message || `PUT ${endpoint} failed: ${response.statusText}`,
+        error,
       );
     }
 
