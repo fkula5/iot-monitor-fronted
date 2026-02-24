@@ -38,11 +38,18 @@ const editingGroup = ref<SensorGroup | null>(null);
 async function fetchGroups() {
   try {
     const data = await api.get<SensorGroup[]>(config.endpoints.sensorGroups);
-    groups.value = data || [];
+
+    groups.value = (data || []).map((group) => {
+      return {
+        ...group,
+        sensor_ids: group.sensors ? group.sensors.map((s) => s.id) : [],
+      };
+    });
   } catch (err: any) {
     error.value = err.message;
   }
 }
+
 async function fetchSensors() {
   try {
     const data = await api.get<Sensor[]>(config.endpoints.sensors);
@@ -65,11 +72,22 @@ onMounted(loadData);
 
 async function handleSaveGroup(group: any) {
   try {
+    const payload = {
+      name: group.name,
+      description: group.description,
+      color: group.color,
+      icon: group.icon,
+      sensor_ids: group.sensor_ids || [],
+    };
+
+    console.log(payload);
+
     if (group.id) {
-      await api.put(config.endpoints.sensorGroup(group.id), group);
+      await api.put(config.endpoints.sensorGroup(group.id), payload);
     } else {
-      await api.post(config.endpoints.sensorGroups, group);
+      await api.post(config.endpoints.sensorGroups, payload);
     }
+
     await fetchGroups();
     isDialogOpen.value = false;
   } catch (err: any) {
@@ -87,8 +105,12 @@ async function handleDeleteGroup(groupId: number) {
   }
 }
 
-function openEditDialog(group: SensorGroup) {
-  editingGroup.value = { ...group };
+function openEditDialog(group: any) {
+  editingGroup.value = {
+    ...group,
+    sensor_ids:
+      group.sensor_ids || group.sensors?.map((s: Sensor) => s.id) || [],
+  };
   isDialogOpen.value = true;
 }
 
@@ -274,7 +296,7 @@ function formatDate(dateString: string) {
                 <div class="flex items-center justify-between text-sm">
                   <span class="text-gray-500">Sensory:</span>
                   <Badge variant="secondary">
-                    {{ group.sensor_ids?.length || 0 }}
+                    {{ group.sensor_count }}
                   </Badge>
                 </div>
                 <div

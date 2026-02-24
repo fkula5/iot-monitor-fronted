@@ -15,24 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-interface Sensor {
-  id: number;
-  name: string;
-  location: string | null;
-  sensor_type: {
-    name: string;
-  };
-}
-
-interface SensorGroup {
-  id?: number;
-  name: string;
-  description: string;
-  color: string;
-  icon: string;
-  sensor_ids: number[];
-}
+import type { Sensor, SensorGroup } from "@/lib/api";
 
 interface Props {
   isOpen: boolean;
@@ -47,11 +30,16 @@ const emit = defineEmits<{
 }>();
 
 const formData = ref<SensorGroup>({
+  id: 0,
   name: "",
   description: "",
   color: "#3B82F6",
   icon: "folder",
   sensor_ids: [],
+  sensor_count: 0,
+  sensors: [] as Sensor[],
+  created_at: "",
+  updated_at: "",
 });
 
 const colorOptions = [
@@ -77,45 +65,51 @@ const isEditMode = computed(() => !!props.group?.id);
 watch(
   () => props.isOpen,
   (newVal) => {
-    if (newVal && props.group) {
-      formData.value = { ...props.group };
-    } else if (!newVal) {
-      setTimeout(resetForm, 300);
-    }
-  }
-);
-
-watch(
-  () => props.group,
-  (newGroup) => {
-    if (newGroup) {
-      formData.value = { ...newGroup };
+    if (newVal) {
+      if (props.group) {
+        formData.value = {
+          ...props.group,
+          sensor_ids: [...(props.group.sensor_ids || [])],
+        };
+      } else {
+        resetForm();
+      }
     }
   },
-  { deep: true }
 );
 
 const resetForm = () => {
   formData.value = {
+    id: 0,
     name: "",
     description: "",
     color: "#3B82F6",
     icon: "folder",
     sensor_ids: [],
+    sensors: [],
+    sensor_count: 0,
+    created_at: "",
+    updated_at: "",
   };
 };
 
 const toggleSensor = (sensorId: number) => {
-  const index = formData.value.sensor_ids.indexOf(sensorId);
+  const id = Number(sensorId);
+
+  if (!formData.value.sensor_ids) {
+    formData.value.sensor_ids = [];
+  }
+
+  const index = formData.value.sensor_ids.indexOf(id);
   if (index > -1) {
     formData.value.sensor_ids.splice(index, 1);
   } else {
-    formData.value.sensor_ids.push(sensorId);
+    formData.value.sensor_ids.push(id);
   }
 };
 
 const isSensorSelected = (sensorId: number) => {
-  return formData.value.sensor_ids.includes(sensorId);
+  return formData.value.sensor_ids?.includes(sensorId) || false;
 };
 
 const handleSubmit = () => {
@@ -125,7 +119,6 @@ const handleSubmit = () => {
   }
 
   emit("save", { ...formData.value });
-  emit("update:isOpen", false);
 };
 
 const onOpenChange = (open: boolean) => {
@@ -217,29 +210,31 @@ const onOpenChange = (open: boolean) => {
           <Label>
             Sensory w Grupie
             <Badge variant="secondary" class="ml-2">
-              {{ formData.sensor_ids.length }} wybranych
+              {{ formData.sensor_ids?.length || 0 }} wybranych
             </Badge>
           </Label>
+          {{ formData.sensor_ids }}
           <ScrollArea class="h-[200px] border rounded-md p-4">
             <div class="space-y-2">
               <div
                 v-for="sensor in sensors"
                 :key="sensor.id"
-                class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
+                class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                @click="toggleSensor(sensor.id)"
               >
                 <Checkbox
                   :id="`sensor-${sensor.id}`"
                   :checked="isSensorSelected(sensor.id)"
-                  @update:checked="toggleSensor(sensor.id)"
+                  class="pointer-events-none"
                 />
                 <Label
                   :for="`sensor-${sensor.id}`"
-                  class="flex-1 cursor-pointer"
+                  class="flex-1 cursor-pointer pointer-events-none"
                 >
                   <div>
                     <p class="font-medium">{{ sensor.name }}</p>
                     <p class="text-xs text-gray-500">
-                      {{ sensor.sensor_type.name }}
+                      {{ sensor.sensor_type?.name }}
                       <span v-if="sensor.location">
                         • {{ sensor.location }}
                       </span>

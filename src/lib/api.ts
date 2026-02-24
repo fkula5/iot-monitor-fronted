@@ -59,6 +59,8 @@ export interface SensorGroup {
   color: string;
   icon: string;
   sensor_ids: number[];
+  sensors?: Sensor[];
+  sensor_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -152,9 +154,11 @@ export const api = {
     });
 
     if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
       throw new ApiError(
         response.status,
-        `PUT ${endpoint} failed: ${response.statusText}`,
+        error.message || `PUT ${endpoint} failed: ${response.statusText}`,
+        error,
       );
     }
 
