@@ -15,24 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-interface Sensor {
-  id: number;
-  name: string;
-  location: string | null;
-  sensor_type: {
-    name: string;
-  };
-}
-
-interface SensorGroup {
-  id?: number;
-  name: string;
-  description: string;
-  color: string;
-  icon: string;
-  sensor_ids: number[];
-}
+import type { Sensor, SensorGroup } from "@/lib/api";
 
 interface Props {
   isOpen: boolean;
@@ -47,11 +30,16 @@ const emit = defineEmits<{
 }>();
 
 const formData = ref<SensorGroup>({
+  id: 0,
   name: "",
   description: "",
   color: "#3B82F6",
   icon: "folder",
   sensor_ids: [],
+  sensor_count: 0,
+  sensors: [] as Sensor[],
+  created_at: "",
+  updated_at: "",
 });
 
 const colorOptions = [
@@ -77,10 +65,13 @@ const isEditMode = computed(() => !!props.group?.id);
 watch(
   () => props.isOpen,
   (newVal) => {
-    if (newVal && props.group) {
-      formData.value = { ...props.group };
-    } else if (!newVal) {
-      setTimeout(resetForm, 300);
+    if (newVal) {
+      if (props.group) {
+        formData.value = JSON.parse(JSON.stringify(props.group));
+        if (!formData.value.sensor_ids) formData.value.sensor_ids = [];
+      } else {
+        resetForm();
+      }
     }
   },
 );
@@ -89,7 +80,10 @@ watch(
   () => props.group,
   (newGroup) => {
     if (newGroup) {
-      formData.value = { ...newGroup };
+      formData.value = {
+        ...newGroup,
+        sensor_ids: newGroup.sensor_ids || [],
+      };
     }
   },
   { deep: true },
@@ -97,11 +91,16 @@ watch(
 
 const resetForm = () => {
   formData.value = {
+    id: 0,
     name: "",
     description: "",
     color: "#3B82F6",
     icon: "folder",
     sensor_ids: [],
+    sensors: [],
+    sensor_count: 0,
+    created_at: "",
+    updated_at: "",
   };
 };
 
@@ -121,8 +120,7 @@ const toggleSensor = (sensorId: number) => {
 };
 
 const isSensorSelected = (sensorId: number) => {
-  if (!formData.value.sensor_ids) return false;
-  return formData.value.sensor_ids.includes(Number(sensorId));
+  return formData.value.sensor_ids?.includes(sensorId) || false;
 };
 
 const handleSubmit = () => {
@@ -224,7 +222,7 @@ const onOpenChange = (open: boolean) => {
           <Label>
             Sensory w Grupie
             <Badge variant="secondary" class="ml-2">
-              {{ formData.sensor_ids.length }} wybranych
+              {{ formData.sensors?.length || 0 }} wybranych
             </Badge>
           </Label>
           <ScrollArea class="h-[200px] border rounded-md p-4">
@@ -238,6 +236,7 @@ const onOpenChange = (open: boolean) => {
                 <Checkbox
                   :id="`sensor-${sensor.id}`"
                   :checked="isSensorSelected(sensor.id)"
+                  :default-value="isSensorSelected(sensor.id)"
                 />
                 <Label
                   :for="`sensor-${sensor.id}`"

@@ -38,11 +38,18 @@ const editingGroup = ref<SensorGroup | null>(null);
 async function fetchGroups() {
   try {
     const data = await api.get<SensorGroup[]>(config.endpoints.sensorGroups);
-    groups.value = data || [];
+
+    groups.value = (data || []).map((group) => {
+      return {
+        ...group,
+        sensor_ids: group.sensors ? group.sensors.map((s) => s.id) : [],
+      };
+    });
   } catch (err: any) {
     error.value = err.message;
   }
 }
+
 async function fetchSensors() {
   try {
     const data = await api.get<Sensor[]>(config.endpoints.sensors);
@@ -87,8 +94,12 @@ async function handleDeleteGroup(groupId: number) {
   }
 }
 
-function openEditDialog(group: SensorGroup) {
-  editingGroup.value = { ...group };
+function openEditDialog(group: any) {
+  editingGroup.value = {
+    ...group,
+    sensor_ids:
+      group.sensor_ids || group.sensors?.map((s: Sensor) => s.id) || [],
+  };
   isDialogOpen.value = true;
 }
 
