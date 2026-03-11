@@ -72,7 +72,7 @@ watch(
       };
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const handleSubmit = () => {
@@ -104,6 +104,7 @@ onMounted(fetchSensors);
     <DialogContent class="sm:max-w-[500px]">
       <DialogHeader>
         <DialogTitle>Edytuj Regułę Alertu</DialogTitle>
+        {{ rule }}
         <DialogDescription>
           Zaktualizuj warunki dla tej reguły.
         </DialogDescription>
@@ -184,7 +185,9 @@ onMounted(fetchSensors);
             v-model="formData.is_enabled"
             class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
-          <Label for="edit-rule-is-enabled" class="cursor-pointer">Reguła aktywna</Label>
+          <Label for="edit-rule-is-enabled" class="cursor-pointer"
+            >Reguła aktywna</Label
+          >
         </div>
 
         <div class="flex justify-end space-x-2 pt-4">
