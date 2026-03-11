@@ -8,6 +8,7 @@ import {
   Folder,
   RadioReceiver,
   UserRoundCog,
+  Bell,
 } from "lucide-vue-next";
 </script>
 
@@ -79,6 +80,16 @@ import {
             >
               3
             </span>
+          </RouterLink>
+
+          <RouterLink
+            to="/panel/alert-rules"
+            active-class="bg-blue-50 text-blue-700"
+            v-slot="{ isActive }"
+            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-700 transition-all hover:bg-gray-100"
+          >
+            <Bell :class="['h-4 w-4', isActive && 'text-blue-700']" />
+            <span :class="[isActive && 'font-semibold']">Reguły Alertów</span>
           </RouterLink>
 
           <RouterLink
