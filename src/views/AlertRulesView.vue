@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { api, config, type AlertRule } from "@/lib/api";
+import { ref, onMounted, computed } from "vue";
+import { api, config, type AlertRule, type PaginatedAlertRuleResponse } from "@/lib/api";
 import PageHeader from "@/components/shared/PageHeader.vue";
 import AlertRulesTable from "@/components/alert/AlertRulesTable.vue";
 import AddAlertRule, { type NewAlertRule } from "@/components/alert/AddAlertRule.vue";
 import EditAlertRule from "@/components/alert/EditAlertRule.vue";
 import { Button } from "@/components/ui/button";
-import { Plus, Bell } from "lucide-vue-next";
+import { Plus, Bell, ChevronLeft, ChevronRight } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import EmptyState from "@/components/shared/EmptyState.vue";
 import LoadingSkeleton from "@/components/shared/LoadingSkeleton.vue";
@@ -17,16 +17,29 @@ const isAddOpen = ref(false);
 const isEditOpen = ref(false);
 const selectedRule = ref<AlertRule | null>(null);
 
+const totalCount = ref(0);
+const page = ref(1);
+const limit = ref(10);
+
+const totalPages = computed(() => Math.ceil(totalCount.value / limit.value));
+
 async function fetchRules() {
   isLoading.value = true;
   try {
-    const data = await api.get<AlertRule[]>(config.endpoints.alertRules);
-    rules.value = data || [];
+    const data = await api.get<PaginatedAlertRuleResponse>(`${config.endpoints.alertRules}?page=${page.value}&limit=${limit.value}`);
+    rules.value = data.alert_rules || [];
+    totalCount.value = data.total_count || 0;
   } catch (error) {
     toast.error("Nie udało się pobrać reguł alertów");
   } finally {
     isLoading.value = false;
   }
+}
+
+function handlePageChange(newPage: number) {
+  if (newPage < 1 || newPage > totalPages.value) return;
+  page.value = newPage;
+  fetchRules();
 }
 
 async function handleAdd(newRule: NewAlertRule) {
@@ -64,7 +77,7 @@ async function handleDelete(id: number) {
   try {
     await api.delete(config.endpoints.alertRule(id));
     toast.success("Reguła została usunięta");
-    rules.value = rules.value.filter(r => r.id !== id);
+    fetchRules();
   } catch (error) {
     toast.error("Błąd podczas usuwania reguły");
   }
@@ -118,13 +131,39 @@ onMounted(fetchRules);
       </EmptyState>
     </div>
 
-    <div v-else>
+    <div v-else class="space-y-4">
       <AlertRulesTable
         :rules="rules"
         @edit="openEdit"
         @delete="handleDelete"
         @toggle="handleToggle"
       />
+
+      <div class="flex items-center justify-between" v-if="totalPages > 1">
+        <div class="text-sm text-muted-foreground">
+          Strona {{ page }} z {{ totalPages }} (łącznie {{ totalCount }} reguł)
+        </div>
+        <div class="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="page === 1 || isLoading"
+            @click="handlePageChange(page - 1)"
+          >
+            <ChevronLeft class="h-4 w-4 mr-1" />
+            Poprzednia
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="page === totalPages || isLoading"
+            @click="handlePageChange(page + 1)"
+          >
+            Następna
+            <ChevronRight class="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      </div>
     </div>
 
     <AddAlertRule

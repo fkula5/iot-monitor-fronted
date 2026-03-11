@@ -109,6 +109,20 @@ export interface ReadingUpdate {
   unit: string;
 }
 
+export interface PaginatedResponse {
+  total_count: number;
+  page: number;
+  limit: number;
+}
+
+export interface PaginatedAlertResponse extends PaginatedResponse {
+  alerts: Alert[];
+}
+
+export interface PaginatedAlertRuleResponse extends PaginatedResponse {
+  alert_rules: AlertRule[];
+}
+
 export function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem("authToken");
   return {
