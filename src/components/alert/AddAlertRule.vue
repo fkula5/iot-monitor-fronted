@@ -76,18 +76,19 @@ const resetForm = () => {
 };
 
 const handleSubmit = () => {
-  if (!formData.value.name || !formData.value.sensor_id || !formData.value.condition_type) {
+  const name = formData.value.name.trim();
+  if (!name || !formData.value.sensor_id || !formData.value.condition_type) {
     alert("Proszę wypełnić wszystkie wymagane pola.");
     return;
   }
 
   const newRule: NewAlertRule = {
-    name: formData.value.name,
+    name: name,
     sensor_id: Number(formData.value.sensor_id),
     condition_type: formData.value.condition_type,
     threshold: Number(formData.value.threshold),
     is_enabled: formData.value.is_enabled,
-    description: formData.value.description || undefined,
+    description: formData.value.description.trim() || undefined,
   };
 
   emit("add", newRule);
@@ -117,9 +118,9 @@ onMounted(fetchSensors);
       </DialogHeader>
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div class="space-y-2">
-          <Label htmlFor="name">Nazwa Reguły *</Label>
+          <Label for="rule-name">Nazwa Reguły *</Label>
           <Input
-            id="name"
+            id="rule-name"
             v-model="formData.name"
             placeholder="np. Wysoka temperatura w serwerowni"
             required
@@ -128,9 +129,9 @@ onMounted(fetchSensors);
 
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
-            <Label htmlFor="sensor">Sensor *</Label>
+            <Label for="rule-sensor">Sensor *</Label>
             <Select v-model="formData.sensor_id" required>
-              <SelectTrigger id="sensor">
+              <SelectTrigger id="rule-sensor">
                 <SelectValue placeholder="Wybierz sensor" />
               </SelectTrigger>
               <SelectContent>
@@ -146,9 +147,9 @@ onMounted(fetchSensors);
           </div>
 
           <div class="space-y-2">
-            <Label htmlFor="condition">Warunek *</Label>
+            <Label for="rule-condition">Warunek *</Label>
             <Select v-model="formData.condition_type" required>
-              <SelectTrigger id="condition">
+              <SelectTrigger id="rule-condition">
                 <SelectValue placeholder="Wybierz warunek" />
               </SelectTrigger>
               <SelectContent>
@@ -164,9 +165,9 @@ onMounted(fetchSensors);
         </div>
 
         <div class="space-y-2">
-          <Label htmlFor="threshold">Próg wyzwolenia *</Label>
+          <Label for="rule-threshold">Próg wyzwolenia *</Label>
           <Input
-            id="threshold"
+            id="rule-threshold"
             type="number"
             step="any"
             v-model="formData.threshold"
@@ -175,9 +176,9 @@ onMounted(fetchSensors);
         </div>
 
         <div class="space-y-2">
-          <Label htmlFor="description">Opis (opcjonalnie)</Label>
+          <Label for="rule-description">Opis (opcjonalnie)</Label>
           <Textarea
-            id="description"
+            id="rule-description"
             v-model="formData.description"
             placeholder="Dodatkowe informacje o regule"
             :rows="2"
@@ -187,11 +188,11 @@ onMounted(fetchSensors);
         <div class="flex items-center space-x-2">
           <input
             type="checkbox"
-            id="is_enabled"
+            id="rule-is-enabled"
             v-model="formData.is_enabled"
             class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
-          <Label htmlFor="is_enabled" class="cursor-pointer">Reguła aktywna</Label>
+          <Label for="rule-is-enabled" class="cursor-pointer">Reguła aktywna</Label>
         </div>
 
         <div class="flex justify-end space-x-2 pt-4">

@@ -76,19 +76,20 @@ watch(
 );
 
 const handleSubmit = () => {
-  if (!formData.value.name || !formData.value.sensor_id || !formData.value.condition_type) {
+  const name = formData.value.name.trim();
+  if (!name || !formData.value.sensor_id || !formData.value.condition_type) {
     alert("Proszę wypełnić wszystkie wymagane pola.");
     return;
   }
 
   const updatedRule: AlertRule = {
     ...props.rule!,
-    name: formData.value.name,
+    name: name,
     sensor_id: Number(formData.value.sensor_id),
     condition_type: formData.value.condition_type as any,
     threshold: Number(formData.value.threshold),
     is_enabled: formData.value.is_enabled,
-    description: formData.value.description || undefined,
+    description: formData.value.description.trim() || undefined,
   };
 
   emit("update", updatedRule);
@@ -109,9 +110,9 @@ onMounted(fetchSensors);
       </DialogHeader>
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div class="space-y-2">
-          <Label htmlFor="edit-name">Nazwa Reguły *</Label>
+          <Label for="edit-rule-name">Nazwa Reguły *</Label>
           <Input
-            id="edit-name"
+            id="edit-rule-name"
             v-model="formData.name"
             placeholder="np. Wysoka temperatura w serwerowni"
             required
@@ -120,9 +121,9 @@ onMounted(fetchSensors);
 
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
-            <Label htmlFor="edit-sensor">Sensor *</Label>
+            <Label for="edit-rule-sensor">Sensor *</Label>
             <Select v-model="formData.sensor_id" required>
-              <SelectTrigger id="edit-sensor">
+              <SelectTrigger id="edit-rule-sensor">
                 <SelectValue placeholder="Wybierz sensor" />
               </SelectTrigger>
               <SelectContent>
@@ -138,9 +139,9 @@ onMounted(fetchSensors);
           </div>
 
           <div class="space-y-2">
-            <Label htmlFor="edit-condition">Warunek *</Label>
+            <Label for="edit-rule-condition">Warunek *</Label>
             <Select v-model="formData.condition_type" required>
-              <SelectTrigger id="edit-condition">
+              <SelectTrigger id="edit-rule-condition">
                 <SelectValue placeholder="Wybierz warunek" />
               </SelectTrigger>
               <SelectContent>
@@ -156,9 +157,9 @@ onMounted(fetchSensors);
         </div>
 
         <div class="space-y-2">
-          <Label htmlFor="edit-threshold">Próg wyzwolenia *</Label>
+          <Label for="edit-rule-threshold">Próg wyzwolenia *</Label>
           <Input
-            id="edit-threshold"
+            id="edit-rule-threshold"
             type="number"
             step="any"
             v-model="formData.threshold"
@@ -167,9 +168,9 @@ onMounted(fetchSensors);
         </div>
 
         <div class="space-y-2">
-          <Label htmlFor="edit-description">Opis (opcjonalnie)</Label>
+          <Label for="edit-rule-description">Opis (opcjonalnie)</Label>
           <Textarea
-            id="edit-description"
+            id="edit-rule-description"
             v-model="formData.description"
             placeholder="Dodatkowe informacje o regule"
             :rows="2"
@@ -179,11 +180,11 @@ onMounted(fetchSensors);
         <div class="flex items-center space-x-2">
           <input
             type="checkbox"
-            id="edit-is_enabled"
+            id="edit-rule-is-enabled"
             v-model="formData.is_enabled"
             class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
-          <Label htmlFor="edit-is_enabled" class="cursor-pointer">Reguła aktywna</Label>
+          <Label for="edit-rule-is-enabled" class="cursor-pointer">Reguła aktywna</Label>
         </div>
 
         <div class="flex justify-end space-x-2 pt-4">

@@ -31,8 +31,17 @@ async function fetchRules() {
 
 async function handleAdd(newRule: NewAlertRule) {
   try {
-    await api.post<AlertRule>(config.endpoints.alertRules, newRule);
+    const payload = {
+      name: newRule.name,
+      sensor_id: newRule.sensor_id,
+      condition_type: newRule.condition_type,
+      threshold: newRule.threshold,
+      is_enabled: newRule.is_enabled,
+      description: newRule.description,
+    };
+    await api.post<AlertRule>(config.endpoints.alertRules, payload);
     toast.success("Reguła została dodana");
+    isAddOpen.value = false;
     fetchRules();
   } catch (error) {
     toast.error("Błąd podczas dodawania reguły");
