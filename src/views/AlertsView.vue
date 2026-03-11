@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { api } from "@/lib/api";
+import { ref, onMounted, computed } from "vue";
+import { api, type PaginatedAlertResponse, type Alert } from "@/lib/api";
 import PageHeader from "@/components/shared/PageHeader.vue";
 import {
   Table,
@@ -12,32 +12,34 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, AlertTriangle } from "lucide-vue-next";
+import { CheckCircle, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-vue-next";
 import { toast } from "vue-sonner";
-
-interface Alert {
-  id: number;
-  rule_id: number;
-  sensor_id: number;
-  value: number;
-  message: string;
-  is_read: boolean;
-  triggered_at: string;
-}
 
 const alerts = ref<Alert[]>([]);
 const isLoading = ref(true);
+const totalCount = ref(0);
+const page = ref(1);
+const limit = ref(10);
+
+const totalPages = computed(() => Math.ceil(totalCount.value / limit.value));
 
 async function fetchAlerts() {
   isLoading.value = true;
   try {
-    const response = await api.get<Alert[]>("/api/alerts");
-    alerts.value = response || [];
+    const response = await api.get<PaginatedAlertResponse>(`/api/alerts?page=${page.value}&limit=${limit.value}`);
+    alerts.value = response.alerts || [];
+    totalCount.value = response.total_count || 0;
   } catch (error) {
     toast.error("Nie udało się pobrać historii alertów");
   } finally {
     isLoading.value = false;
   }
+}
+
+function handlePageChange(newPage: number) {
+  if (newPage < 1 || newPage > totalPages.value) return;
+  page.value = newPage;
+  fetchAlerts();
 }
 
 async function markAsRead(id: number) {
@@ -133,6 +135,32 @@ onMounted(() => {
           </TableRow>
         </TableBody>
       </Table>
+    </div>
+
+    <div class="flex items-center justify-between" v-if="totalPages > 1">
+      <div class="text-sm text-muted-foreground">
+        Strona {{ page }} z {{ totalPages }} (łącznie {{ totalCount }} alertów)
+      </div>
+      <div class="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="page === 1 || isLoading"
+          @click="handlePageChange(page - 1)"
+        >
+          <ChevronLeft class="h-4 w-4 mr-1" />
+          Poprzednia
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="page === totalPages || isLoading"
+          @click="handlePageChange(page + 1)"
+        >
+          Następna
+          <ChevronRight class="h-4 w-4 ml-1" />
+        </Button>
+      </div>
     </div>
   </div>
 </template>
