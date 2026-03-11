@@ -268,7 +268,7 @@ function connectWebSocket(): void {
 
     ws.value.onmessage = (event: MessageEvent) => {
       try {
-        const data: ReadingUpdate = JSON.parse(event.data);
+        const data: any = JSON.parse(event.data);
 
         if (data.sensor_id == sensorId.value) {
           const timestamp = parseTimestamp(data.timestamp);
