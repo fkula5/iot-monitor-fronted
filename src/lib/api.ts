@@ -24,6 +24,11 @@ export const config = {
     sensorLatest: (id: number) => `/api/data/sensors/${id}/latest`,
     wsReadings: (sensorIds: number[]) =>
       `/api/data/ws/readings?sensor_ids=${sensorIds.join(",")}`,
+
+    alertRules: "/api/alert-rules",
+    alertRule: (id: number) => `/api/alert-rules/${id}`,
+    alerts: "/api/alerts",
+    alertRead: (id: number) => `/api/alerts/${id}/read`,
   },
 } as const;
 
@@ -50,6 +55,30 @@ export interface Sensor {
   sensor_type: SensorType;
   created_at: string;
   updated_at: string;
+}
+
+export interface AlertRule {
+  id: number;
+  sensor_id: number;
+  name: string;
+  condition: "gt" | "lt" | "eq" | "neq" | "gte" | "lte";
+  threshold: number;
+  is_active: boolean;
+  sensor?: Sensor;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Alert {
+  id: number;
+  rule_id: number;
+  sensor_id: number;
+  value: number;
+  message: string;
+  is_read: boolean;
+  triggered_at: string;
+  sensor?: Sensor;
+  rule?: AlertRule;
 }
 
 export interface SensorGroup {

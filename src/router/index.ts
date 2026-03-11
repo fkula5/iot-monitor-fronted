@@ -5,6 +5,7 @@ import SensorsView from "@/views/SensorsView.vue";
 import AdminPanelLayout from "@/components/layout/AdminPanelLayout.vue";
 import DashboardView from "@/views/DashboardView.vue";
 import AlertsView from "@/views/AlertsView.vue";
+import AlertRulesView from "@/views/AlertRulesView.vue";
 import SensorDetailView from "@/views/SensorDetailView.vue";
 import SensorGroupsView from "@/views/SensorGroupsView.vue";
 import SensorTypeView from "@/views/SensorTypeView.vue";
@@ -59,6 +60,11 @@ const router = createRouter({
           path: "alerts",
           name: "Alerty",
           component: AlertsView,
+        },
+        {
+          path: "alert-rules",
+          name: "Reguły alertów",
+          component: AlertRulesView,
         },
         {
           path: "settings",

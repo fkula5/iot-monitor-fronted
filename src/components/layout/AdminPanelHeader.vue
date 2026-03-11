@@ -9,6 +9,8 @@ import {
   Menu,
   Settings,
   User,
+  RadioReceiver,
+  Folder,
 } from "lucide-vue-next";
 
 import { Button } from "@/components/ui/button";
@@ -58,9 +60,9 @@ function handleLogout() {
         <nav class="grid gap-2 text-lg font-medium">
           <RouterLink
             to="/panel"
-            class="flex items-center gap-2 text-lg font-semibold"
+            class="flex items-center gap-2 text-lg font-semibold mb-4"
           >
-            <span class="sr-only">IoT Monitor</span>
+            <span class="font-bold">IoT Monitor</span>
           </RouterLink>
           <RouterLink
             to="/panel"
@@ -77,11 +79,39 @@ function handleLogout() {
             Sensory
           </RouterLink>
           <RouterLink
+            to="/panel/sensor-types"
+            class="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+          >
+            <RadioReceiver class="h-5 w-5" />
+            Typy Sensorów
+          </RouterLink>
+          <RouterLink
+            to="/panel/groups"
+            class="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+          >
+            <Folder class="h-5 w-5" />
+            Grupy
+          </RouterLink>
+          <RouterLink
             to="/panel/alerts"
             class="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
           >
             <Bell class="h-5 w-5" />
             Alerty
+          </RouterLink>
+          <RouterLink
+            to="/panel/alert-rules"
+            class="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+          >
+            <Bell class="h-5 w-5" />
+            Reguły Alertów
+          </RouterLink>
+          <RouterLink
+            to="/panel/settings"
+            class="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+          >
+            <Settings class="h-5 w-5" />
+            Ustawienia
           </RouterLink>
         </nav>
       </SheetContent>
