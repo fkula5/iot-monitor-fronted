@@ -19,13 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface NewAlertRule {
   name: string;
   sensor_id: number;
-  condition: string;
+  condition_type: string;
   threshold: number;
-  is_active: boolean;
+  is_enabled: boolean;
+  description?: string;
 }
 
 interface Props {
@@ -44,9 +46,10 @@ const sensors = ref<Sensor[]>([]);
 const formData = ref({
   name: "",
   sensor_id: "",
-  condition: "GT",
+  condition_type: "GT",
   threshold: 0,
-  is_active: true,
+  is_enabled: true,
+  description: "",
 });
 
 async function fetchSensors() {
@@ -65,14 +68,15 @@ const resetForm = () => {
   formData.value = {
     name: "",
     sensor_id: "",
-    condition: "GT",
+    condition_type: "GT",
     threshold: 0,
-    is_active: true,
+    is_enabled: true,
+    description: "",
   };
 };
 
 const handleSubmit = () => {
-  if (!formData.value.name || !formData.value.sensor_id || !formData.value.condition) {
+  if (!formData.value.name || !formData.value.sensor_id || !formData.value.condition_type) {
     alert("Proszę wypełnić wszystkie wymagane pola.");
     return;
   }
@@ -80,9 +84,10 @@ const handleSubmit = () => {
   const newRule: NewAlertRule = {
     name: formData.value.name,
     sensor_id: Number(formData.value.sensor_id),
-    condition: formData.value.condition,
+    condition_type: formData.value.condition_type,
     threshold: Number(formData.value.threshold),
-    is_active: formData.value.is_active,
+    is_enabled: formData.value.is_enabled,
+    description: formData.value.description || undefined,
   };
 
   emit("add", newRule);
@@ -142,7 +147,7 @@ onMounted(fetchSensors);
 
           <div class="space-y-2">
             <Label htmlFor="condition">Warunek *</Label>
-            <Select v-model="formData.condition" required>
+            <Select v-model="formData.condition_type" required>
               <SelectTrigger id="condition">
                 <SelectValue placeholder="Wybierz warunek" />
               </SelectTrigger>
@@ -169,14 +174,24 @@ onMounted(fetchSensors);
           />
         </div>
 
+        <div class="space-y-2">
+          <Label htmlFor="description">Opis (opcjonalnie)</Label>
+          <Textarea
+            id="description"
+            v-model="formData.description"
+            placeholder="Dodatkowe informacje o regule"
+            :rows="2"
+          />
+        </div>
+
         <div class="flex items-center space-x-2">
           <input
             type="checkbox"
-            id="is_active"
-            v-model="formData.is_active"
+            id="is_enabled"
+            v-model="formData.is_enabled"
             class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
-          <Label htmlFor="is_active" class="cursor-pointer">Reguła aktywna</Label>
+          <Label htmlFor="is_enabled" class="cursor-pointer">Reguła aktywna</Label>
         </div>
 
         <div class="flex justify-end space-x-2 pt-4">

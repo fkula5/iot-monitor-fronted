@@ -61,9 +61,10 @@ export interface AlertRule {
   id: number;
   sensor_id: number;
   name: string;
-  condition: "GT" | "LT" | "EQ" | "NEQ" | "GTE" | "LTE";
+  condition_type: "GT" | "LT" | "EQ" | "NEQ" | "GTE" | "LTE";
   threshold: number;
-  is_active: boolean;
+  is_enabled: boolean;
+  description?: string;
   sensor?: Sensor;
   created_at: string;
   updated_at: string;

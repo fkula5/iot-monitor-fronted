@@ -63,10 +63,10 @@ async function handleDelete(id: number) {
 
 async function handleToggle(rule: AlertRule) {
   try {
-    const updated = { ...rule, is_active: !rule.is_active };
+    const updated = { ...rule, is_enabled: !rule.is_enabled };
     await api.put(config.endpoints.alertRule(rule.id), updated);
-    rule.is_active = updated.is_active;
-    toast.success(rule.is_active ? "Reguła aktywowana" : "Reguła dezaktywowana");
+    rule.is_enabled = updated.is_enabled;
+    toast.success(rule.is_enabled ? "Reguła aktywowana" : "Reguła dezaktywowana");
   } catch (error) {
     toast.error("Wystąpił błąd");
   }

@@ -83,21 +83,21 @@ function formatDate(dateString: string): string {
             <div
               :class="[
                 'p-2 rounded-lg',
-                rule.is_active ? 'bg-blue-50' : 'bg-gray-50',
+                rule.is_enabled ? 'bg-blue-50' : 'bg-gray-50',
               ]"
             >
-              <Bell
-                v-if="rule.is_active"
-                class="h-5 w-5 text-blue-600"
-              />
-              <BellOff
-                v-else
-                class="h-5 w-5 text-gray-400"
-              />
+              <Bell v-if="rule.is_enabled" class="h-5 w-5 text-blue-600" />
+              <BellOff v-else class="h-5 w-5 text-gray-400" />
             </div>
             <div>
               <p class="font-medium text-gray-900">{{ rule.name }}</p>
-              <p class="text-xs text-gray-500">ID: {{ rule.id }}</p>
+              <p
+                v-if="rule.description"
+                class="text-xs text-gray-500 line-clamp-1"
+              >
+                {{ rule.description }}
+              </p>
+              <p class="text-[10px] text-gray-400">ID: {{ rule.id }}</p>
             </div>
           </div>
         </TableCell>
@@ -111,20 +111,21 @@ function formatDate(dateString: string): string {
         </TableCell>
         <TableCell class="text-left">
           <Badge variant="outline" class="font-mono font-medium">
-            Wartość {{ formatCondition(rule.condition) }} {{ rule.threshold }}
-            {{ rule.sensor?.sensor_type?.unit || '' }}
+            Wartość {{ formatCondition(rule.condition_type) }}
+            {{ rule.threshold }}
+            {{ rule.sensor?.sensor_type?.unit || "" }}
           </Badge>
         </TableCell>
         <TableCell class="text-left">
           <Badge
-            :variant="rule.is_active ? 'default' : 'secondary'"
+            :variant="rule.is_enabled ? 'default' : 'secondary'"
             :class="[
-              rule.is_active
+              rule.is_enabled
                 ? 'bg-green-100 text-green-700 hover:bg-green-100'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-100',
             ]"
           >
-            {{ rule.is_active ? "Aktywna" : "Nieaktywna" }}
+            {{ rule.is_enabled ? "Aktywna" : "Nieaktywna" }}
           </Badge>
         </TableCell>
         <TableCell class="text-sm text-gray-600 text-left">
@@ -139,8 +140,11 @@ function formatDate(dateString: string): string {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem @click="emit('toggle', rule)">
-                <component :is="rule.is_active ? BellOff : Bell" class="h-4 w-4 mr-2" />
-                {{ rule.is_active ? "Dezaktywuj" : "Aktywuj" }}
+                <component
+                  :is="rule.is_enabled ? BellOff : Bell"
+                  class="h-4 w-4 mr-2"
+                />
+                {{ rule.is_enabled ? "Dezaktywuj" : "Aktywuj" }}
               </DropdownMenuItem>
               <DropdownMenuItem @click="emit('edit', rule)">
                 <Edit class="h-4 w-4 mr-2" />
