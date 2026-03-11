@@ -39,12 +39,12 @@ const emit = defineEmits<{
 
 function formatCondition(condition: string) {
   const map: Record<string, string> = {
-    gt: ">",
-    lt: "<",
-    eq: "=",
-    neq: "!=",
-    gte: ">=",
-    lte: "<=",
+    GT: ">",
+    LT: "<",
+    EQ: "=",
+    NEQ: "!=",
+    GTE: ">=",
+    LTE: "<=",
   };
   return map[condition] || condition;
 }

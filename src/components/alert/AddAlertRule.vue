@@ -44,7 +44,7 @@ const sensors = ref<Sensor[]>([]);
 const formData = ref({
   name: "",
   sensor_id: "",
-  condition: "gt",
+  condition: "GT",
   threshold: 0,
   is_active: true,
 });
@@ -65,7 +65,7 @@ const resetForm = () => {
   formData.value = {
     name: "",
     sensor_id: "",
-    condition: "gt",
+    condition: "GT",
     threshold: 0,
     is_active: true,
   };
@@ -147,12 +147,12 @@ onMounted(fetchSensors);
                 <SelectValue placeholder="Wybierz warunek" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gt">Większe niż (>)</SelectItem>
-                <SelectItem value="lt">Mniejsze niż (<)</SelectItem>
-                <SelectItem value="gte">Większe lub równe (>=)</SelectItem>
-                <SelectItem value="lte">Mniejsze lub równe (<=)</SelectItem>
-                <SelectItem value="eq">Równe (=)</SelectItem>
-                <SelectItem value="neq">Różne (!=)</SelectItem>
+                <SelectItem value="GT">Większe niż (>)</SelectItem>
+                <SelectItem value="LT">Mniejsze niż (<)</SelectItem>
+                <SelectItem value="GTE">Większe lub równe (>=)</SelectItem>
+                <SelectItem value="LTE">Mniejsze lub równe (<=)</SelectItem>
+                <SelectItem value="EQ">Równe (=)</SelectItem>
+                <SelectItem value="NEQ">Różne (!=)</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -61,7 +61,7 @@ export interface AlertRule {
   id: number;
   sensor_id: number;
   name: string;
-  condition: "gt" | "lt" | "eq" | "neq" | "gte" | "lte";
+  condition: "GT" | "LT" | "EQ" | "NEQ" | "GTE" | "LTE";
   threshold: number;
   is_active: boolean;
   sensor?: Sensor;
