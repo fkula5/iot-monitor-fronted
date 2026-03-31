@@ -96,10 +96,6 @@ const onSubmit = handleSubmit(async (values) => {
   }
 });
 
-function handleForgotPassword() {
-  alert("Funkcja resetowania hasła będzie wkrótce dostępna");
-}
-
 function togglePasswordVisibility() {
   isPasswordVisible.value = !isPasswordVisible.value;
 }
@@ -160,7 +156,7 @@ function togglePasswordVisibility() {
               <button
                 type="button"
                 class="text-sm text-primary hover:underline"
-                @click="handleForgotPassword"
+                @click="router.push('/forgot-password')"
                 :disabled="isSubmitting"
               >
                 Zapomniałeś hasła?

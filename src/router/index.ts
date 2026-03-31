@@ -77,6 +77,11 @@ const router = createRouter({
       path: "/",
       redirect: "/panel",
     },
+    {
+      path: "/forgot-password",
+      name: "ForgotPassword",
+      component: () => import("@/views/ForgotPasswordView.vue"),
+    }
   ],
 });
 
