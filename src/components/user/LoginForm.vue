@@ -153,14 +153,12 @@ function togglePasswordVisibility() {
           <FormItem>
             <div class="flex items-center justify-between">
               <FormLabel>Hasło</FormLabel>
-              <button
-                type="button"
-                class="text-sm text-primary hover:underline"
-                @click="router.push('/forgot-password')"
-                :disabled="isSubmitting"
+              <RouterLink
+                to="/forgot-password"
+                class="text-sm font-medium text-primary hover:underline"
               >
                 Zapomniałeś hasła?
-              </button>
+              </RouterLink>
             </div>
             <FormControl>
               <div class="relative">
