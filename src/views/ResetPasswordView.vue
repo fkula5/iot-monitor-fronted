@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "vue-sonner";
+import { api } from "@/lib/api";
 
 const route = useRoute();
 const router = useRouter();
@@ -45,7 +46,7 @@ const onSubmit = async () => {
 
   isLoading.value = true;
   try {
-    // place for api call to reset password
+    await api.auth.resetPassword(token.value, password.value);
     toast.success(
       "Hasło zostało pomyślnie zmienione! Możesz się teraz zalogować.",
     );

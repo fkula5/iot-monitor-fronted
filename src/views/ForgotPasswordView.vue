@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "vue-sonner";
+import { api } from "@/lib/api";
 
 const email = ref("");
 const isLoading = ref(false);
@@ -23,7 +24,7 @@ const onSubmit = async () => {
 
   isLoading.value = true;
   try {
-    // place for api call to request password reset
+    await api.auth.forgotPassword(email.value);
     isSubmitted.value = true;
     toast.success("Żądanie zostało wysłane.");
   } catch (error) {
