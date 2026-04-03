@@ -104,7 +104,6 @@ onMounted(fetchSensors);
     <DialogContent class="sm:max-w-[500px]">
       <DialogHeader>
         <DialogTitle>Edytuj Regułę Alertu</DialogTitle>
-        {{ rule }}
         <DialogDescription>
           Zaktualizuj warunki dla tej reguły.
         </DialogDescription>
