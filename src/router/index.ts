@@ -11,6 +11,8 @@ import SensorGroupsView from "@/views/SensorGroupsView.vue";
 import SensorTypeView from "@/views/SensorTypeView.vue";
 import SensorTypeDetailView from "@/views/SensorTypeDetailView.vue";
 import UserSettingsView from "@/views/UserSettingsView.vue";
+import ResetPasswordView from "@/views/ResetPasswordView.vue";
+import ForgotPasswordView from "@/views/ForgotPasswordView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -77,6 +79,16 @@ const router = createRouter({
       path: "/",
       redirect: "/panel",
     },
+    {
+      path: "/forgot-password",
+      name: "ForgotPassword",
+      component: ForgotPasswordView,
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: ResetPasswordView,
+    }
   ],
 });
 

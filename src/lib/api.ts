@@ -13,6 +13,8 @@ export const config = {
     login: "/auth/login",
     register: "/auth/register",
     user: "/auth/user",
+    forgotPassword: "/auth/forgot-password",
+    resetPassword: "/auth/reset-password",
 
     sensors: "/api/sensors",
     sensor: (id: number) => `/api/sensors/${id}`,
@@ -228,6 +230,15 @@ export const api = {
     }
 
     return response.json();
+  },
+
+  auth: {
+    forgotPassword(email: string) {
+      return api.post(config.endpoints.forgotPassword, { email });
+    },
+    resetPassword(token: string, password: string) {
+      return api.post(config.endpoints.resetPassword, { token, password });
+    },
   },
 };
 
