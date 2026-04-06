@@ -38,7 +38,7 @@ const onSubmit = async () => {
 
 <template>
   <div
-    class="container flex h-screen w-screen flex-col items-center justify-center"
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4"
   >
     <Card class="w-[400px]">
       <CardHeader class="space-y-1">
