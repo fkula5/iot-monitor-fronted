@@ -6,6 +6,12 @@ const API_URL =
 const WS_URL =
   import.meta.env.VITE_WS_URL || `${isSecure ? "wss:" : "ws:"}//${currentHost}`;
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: () => void) {
+  unauthorizedHandler = handler;
+}
+
 export const config = {
   apiUrl: API_URL,
   wsUrl: WS_URL,
@@ -146,82 +152,37 @@ export class ApiError extends Error {
 }
 
 export const api = {
-  async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      method: "GET",
-      headers: getAuthHeaders(),
-      ...options,
-    });
-
-    if (!response.ok) {
-      throw new ApiError(
-        response.status,
-        `GET ${endpoint} failed: ${response.statusText}`,
-      );
-    }
-
-    return response.json();
-  },
-
-  async post<T>(
+  async request<T>(
+    method: string,
     endpoint: string,
     body?: any,
     options?: RequestInit,
   ): Promise<T> {
     const response = await fetch(`${API_URL}${endpoint}`, {
-      method: "POST",
+      method,
       headers: getAuthHeaders(),
       body: body ? JSON.stringify(body) : undefined,
       ...options,
     });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new ApiError(
-        response.status,
-        error.message || `POST ${endpoint} failed: ${response.statusText}`,
-        error,
-      );
+    if (response.status === 401) {
+      if (unauthorizedHandler) {
+        unauthorizedHandler();
+      }
     }
 
-    return response.json();
-  },
-
-  async put<T>(
-    endpoint: string,
-    body?: any,
-    options?: RequestInit,
-  ): Promise<T> {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      method: "PUT",
-      headers: getAuthHeaders(),
-      body: body ? JSON.stringify(body) : undefined,
-      ...options,
-    });
-
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        errorData = {};
+      }
+      
       throw new ApiError(
         response.status,
-        error.message || `PUT ${endpoint} failed: ${response.statusText}`,
-        error,
-      );
-    }
-
-    return response.json();
-  },
-
-  async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-      ...options,
-    });
-
-    if (!response.ok) {
-      throw new ApiError(
-        response.status,
-        `DELETE ${endpoint} failed: ${response.statusText}`,
+        errorData.message || `${method} ${endpoint} failed: ${response.statusText}`,
+        errorData,
       );
     }
 
@@ -230,6 +191,22 @@ export const api = {
     }
 
     return response.json();
+  },
+
+  get<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    return this.request<T>("GET", endpoint, undefined, options);
+  },
+
+  post<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+    return this.request<T>("POST", endpoint, body, options);
+  },
+
+  put<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+    return this.request<T>("PUT", endpoint, body, options);
+  },
+
+  delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    return this.request<T>("DELETE", endpoint, undefined, options);
   },
 
   auth: {
