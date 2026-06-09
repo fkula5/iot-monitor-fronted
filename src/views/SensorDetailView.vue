@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from "vue";
+import { useWebSocket } from "@/composables/useWebSocket";
 import { api, config, ApiError, type Sensor } from "@/lib/api";
 import { useRouter, useRoute } from "vue-router";
 import {
@@ -32,7 +33,6 @@ import EditSensor from "@/components/sensor/EditSensor.vue";
 import StatCard from "@/components/shared/StatCard.vue";
 import {
   MAX_CHART_READINGS,
-  MAX_WS_RECONNECT_ATTEMPTS,
   TREND_MIN_READINGS,
   TREND_THRESHOLD_RATIO,
   TREND_WINDOW_SIZE,
@@ -52,7 +52,6 @@ interface ReadingUpdate {
   unit: string;
 }
 
-type ConnectionStatus = "connected" | "disconnected" | "error";
 type Trend = "up" | "down" | "stable";
 
 interface ReadingStats {
@@ -77,10 +76,38 @@ const isLoading = ref<boolean>(true);
 const error = ref<string | null>(null);
 const isEditOpen = ref(false);
 
-const ws = ref<WebSocket | null>(null);
-const isConnecting = ref<boolean>(false);
-const connectionStatus = ref<ConnectionStatus>("disconnected");
-const reconnectAttempts = ref<number>(0);
+const wsUrl = computed(() =>
+  sensorId.value
+    ? `${config.wsUrl}${config.endpoints.wsReadings([sensorId.value])}`
+    : "",
+);
+
+const {
+  status: connectionStatus,
+  connect: connectWebSocket,
+  disconnect: disconnectWebSocket,
+} = useWebSocket(wsUrl, {
+  autoConnect: false, // We connect after fetching sensor data
+  onMessage: (data) => {
+    if (data.sensor_id == sensorId.value) {
+      const timestamp = parseTimestamp(data.timestamp);
+      const value = parseFloat(data.value.toFixed(2));
+
+      if (isNaN(timestamp.getTime()) || isNaN(value)) {
+        console.warn("Invalid reading received:", data);
+        return;
+      }
+
+      const reading: Reading = { timestamp, value };
+      latestReading.value = reading;
+      readings.value.push(reading);
+
+      if (readings.value.length > MAX_CHART_READINGS) {
+        readings.value.shift();
+      }
+    }
+  },
+});
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleString("pl-PL", {
@@ -243,102 +270,8 @@ const handleDelete = () => {
   }
 };
 
-function connectWebSocket(): void {
-  if (ws.value?.readyState === WebSocket.OPEN) return;
-  if (!sensorId.value) return;
-  if (reconnectAttempts.value >= MAX_WS_RECONNECT_ATTEMPTS) {
-    error.value = "Przekroczono maksymalną liczbę prób połączenia";
-    return;
-  }
-
-  isConnecting.value = true;
-  connectionStatus.value = "disconnected";
-
-  try {
-    const wsUrl = `${config.wsUrl}${config.endpoints.wsReadings([sensorId.value])}`;
-    ws.value = new WebSocket(wsUrl);
-
-    ws.value.onopen = () => {
-      console.log("✓ WebSocket connected");
-      connectionStatus.value = "connected";
-      isConnecting.value = false;
-      reconnectAttempts.value = 0;
-      error.value = null;
-    };
-
-    ws.value.onmessage = (event: MessageEvent) => {
-      try {
-        const data: any = JSON.parse(event.data);
-
-        if (data.sensor_id == sensorId.value) {
-          const timestamp = parseTimestamp(data.timestamp);
-          const value = parseFloat(data.value.toFixed(2));
-
-          if (isNaN(timestamp.getTime()) || isNaN(value)) {
-            console.warn("Invalid reading received:", data);
-            return;
-          }
-
-          const reading: Reading = { timestamp, value };
-          latestReading.value = reading;
-          readings.value.push(reading);
-
-          if (readings.value.length > MAX_CHART_READINGS) {
-            readings.value.shift();
-          }
-        }
-      } catch (err) {
-        console.error("WebSocket message parse error:", err);
-      }
-    };
-
-    ws.value.onerror = (err: Event) => {
-      console.error("WebSocket error:", err);
-      connectionStatus.value = "error";
-      isConnecting.value = false;
-    };
-
-    ws.value.onclose = (event: CloseEvent) => {
-      console.log("WebSocket disconnected:", event.code, event.reason);
-      connectionStatus.value = "disconnected";
-      isConnecting.value = false;
-
-      if (reconnectAttempts.value < MAX_WS_RECONNECT_ATTEMPTS && sensor.value) {
-        reconnectAttempts.value++;
-        const delay = Math.min(
-          1000 * Math.pow(2, reconnectAttempts.value),
-          30000,
-        );
-        console.log(
-          `Reconnecting in ${delay}ms (attempt ${reconnectAttempts.value}/${MAX_WS_RECONNECT_ATTEMPTS})`,
-        );
-
-        setTimeout(() => {
-          if (!ws.value || ws.value.readyState === WebSocket.CLOSED) {
-            connectWebSocket();
-          }
-        }, delay);
-      }
-    };
-  } catch (err) {
-    console.error("Failed to create WebSocket:", err);
-    connectionStatus.value = "error";
-    isConnecting.value = false;
-  }
-}
-
-function disconnectWebSocket(): void {
-  if (ws.value) {
-    connectionStatus.value = "disconnected";
-    ws.value.close();
-    ws.value = null;
-  }
-  reconnectAttempts.value = 0;
-}
-
 function manualReconnect(): void {
   disconnectWebSocket();
-  reconnectAttempts.value = 0;
   connectWebSocket();
 }
 
@@ -353,7 +286,7 @@ onMounted(async () => {
 
   if (sensor.value) {
     await fetchHistory();
-    connectWebSocket();
+    connectWebSocket(); // Start WS after data is ready
   }
 });
 
@@ -407,9 +340,9 @@ onUnmounted(() => {
               variant="ghost"
               size="icon"
               class="h-6 w-6 ml-1"
-              :disabled="isConnecting || connectionStatus === 'connected'"
+              :disabled="connectionStatus === 'connecting' || connectionStatus === 'connected'"
             >
-              <RefreshCw :class="['h-3 w-3', isConnecting && 'animate-spin']" />
+              <RefreshCw :class="['h-3 w-3', connectionStatus === 'connecting' && 'animate-spin']" />
             </Button>
           </div>
         </div>
