@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { setUnauthorizedHandler } from "@/lib/api";
+import { toast } from "vue-sonner";
 import LoginView from "@/views/LoginView.vue";
 import RegisterView from "@/views/RegisterView.vue";
 import SensorsView from "@/views/SensorsView.vue";
@@ -90,6 +92,20 @@ const router = createRouter({
       component: ResetPasswordView,
     }
   ],
+});
+
+setUnauthorizedHandler(() => {
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    
+    toast.error("Twoja sesja wygasła. Zaloguj się ponownie", {
+      id: "session-expired",
+    });
+    
+    router.push({ name: "Login" });
+  }
 });
 
 router.beforeEach((to, _from, next) => {
